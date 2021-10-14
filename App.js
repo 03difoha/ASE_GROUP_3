@@ -1,12 +1,12 @@
 import { StatusBar } from "expo-status-bar";
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import * as React from "react";
+import MapView from "react-native-maps";
+import { StyleSheet, Text, View, Dimensions } from "react-native";
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>ASE_3 location data app</Text>
-      <StatusBar style="auto" />
+      <MapView style={styles.map} />
     </View>
   );
 }
@@ -17,5 +17,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  map: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
   },
 });
