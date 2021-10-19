@@ -53,8 +53,7 @@ export default function App() {
       <MapView.Marker
             coordinate={{latitude: lat,
             longitude: long}}
-            title={"title"}
-            description={"description"}
+            title={"Your Current Location"}
          />
          </MapView>
       <Text style={styles.paragraph}>{text}</Text>
