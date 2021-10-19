@@ -49,7 +49,14 @@ export default function App() {
           latitudeDelta: 0.04,
           longitudeDelta: 0.05,
         }}
-      />
+      >
+      <MapView.Marker
+            coordinate={{latitude: lat,
+            longitude: long}}
+            title={"title"}
+            description={"description"}
+         />
+         </MapView>
       <Text style={styles.paragraph}>{text}</Text>
     </View>
   );
