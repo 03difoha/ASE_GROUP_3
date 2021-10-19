@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
-import { Platform, StyleSheet, Text, View, Dimensions } from "react-native";
+import { Platform, StyleSheet, Text, View, Dimensions, Button } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const onPressLearnMore = () => {
+    //For generating alert on buttton click
+    setLocation(location);
+  };
 
   useEffect(() => {
     (async () => {
@@ -57,6 +61,7 @@ export default function App() {
          />
          </MapView>
       <Text style={styles.paragraph}>{text}</Text>
+      <Button onPress={onPressLearnMore} title="Update location" color="#841584" />
     </View>
   );
 }
@@ -69,8 +74,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   map: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    width: 500,
+    height: 600,
   },
   paragraph: {
     fontSize: 12,
