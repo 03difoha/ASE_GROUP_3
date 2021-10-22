@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
-import { Platform, StyleSheet, Text, View, Dimensions, Button } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+  Button,
+} from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const onPressLearnMore = () => {
+  async function update() {
     //For generating alert on buttton click
+    // setLocation(location);
+    console.log("testing");
+    let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
-  };
+  }
 
   useEffect(() => {
     (async () => {
@@ -27,8 +37,7 @@ export default function App() {
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
+      update();
     })();
   }, []);
 
@@ -54,14 +63,13 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
       >
-      <MapView.Marker
-            coordinate={{latitude: lat,
-            longitude: long}}
-            title={"Your Current Location"}
-         />
-         </MapView>
+        <MapView.Marker
+          coordinate={{ latitude: lat, longitude: long }}
+          title={"Your Current Location"}
+        />
+      </MapView>
       <Text style={styles.paragraph}>{text}</Text>
-      <Button onPress={onPressLearnMore} title="Update location" color="#841584" />
+      <Button onPress={update} title="Update location" color="#841584" />
     </View>
   );
 }
