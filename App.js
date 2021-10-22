@@ -16,9 +16,6 @@ export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   async function update() {
-    //For generating alert on buttton click
-    // setLocation(location);
-    console.log("testing");
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
   }
