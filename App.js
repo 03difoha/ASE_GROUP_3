@@ -18,6 +18,21 @@ export default function App() {
   async function update() {
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
+
+    fetch("https://81ivknhzsa.execute-api.us-east-1.amazonaws.com/dev/hello", {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(location),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Success:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }
 
   useEffect(() => {
