@@ -18,9 +18,39 @@ export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  function update(location) {
-    console.log(location);
+  async function update() {
+    let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
+    console.log(location);
+  }
+
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS === "android" && !Constants.isDevice) {
+        setErrorMsg(
+          "Oops, this will not work on Snack in an Android emulator. Try it on your device!"
+        );
+        return;
+      }
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+      Location.watchPositionAsync({}, update);
+      //update();
+    })();
+  }, []);
+
+  let lat = 0;
+  let long = 0;
+  let text = "Waiting..";
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text = JSON.stringify(location);
+    lat = location.coords.latitude;
+    long = location.coords.longitude;
 
     fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
       method: "POST", // or 'PUT'
@@ -43,35 +73,7 @@ export default function App() {
       });
   }
 
-  useEffect(() => {
-    (async () => {
-      if (Platform.OS === "android" && !Constants.isDevice) {
-        setErrorMsg(
-          "Oops, this will not work on Snack in an Android emulator. Try it on your device!"
-        );
-        return;
-      }
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
-        return;
-      }
-      Location.watchPositionAsync({}, update);
-    })();
-  }, []);
-
-  let lat = 0;
-  let long = 0;
-  let text = "Waiting..";
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = JSON.stringify(location);
-    lat = location.coords.latitude;
-    long = location.coords.longitude;
-  }
-
-  function InsertData() {
+  /*function InsertData() {
     fetch("https://harshitpoddar.com/submit_info.php", {
       method: "POST",
       headers: {
@@ -92,7 +94,7 @@ export default function App() {
       .catch((error) => {
         console.error(error);
       });
-  }
+  }*/
 
   return (
     <View style={styles.container}>
