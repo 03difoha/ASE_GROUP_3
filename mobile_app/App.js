@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
+import * as Device from "expo-device";
 
 export default function App() {
   const [location, setLocation] = useState(null);
@@ -19,12 +20,17 @@ export default function App() {
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
 
-    fetch("https://81ivknhzsa.execute-api.us-east-1.amazonaws.com/dev/hello", {
+    fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
       method: "POST", // or 'PUT'
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(location),
+      body: JSON.stringify({
+        phone_id: Device.deviceName,
+        latitude: lat,
+        longitude: long,
+        timedate: Date().toLocaleString(),
+      }),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -81,7 +87,9 @@ export default function App() {
         />
       </MapView>
       <Text style={styles.paragraph}>{text}</Text>
-      <Button onPress={update} title="Update location" color="#841584" />
+      <View style={styles.buttonView}>
+        <Button onPress={update} title="Update location" color="#841584" />
+      </View>
     </View>
   );
 }
@@ -100,5 +108,9 @@ const styles = StyleSheet.create({
   paragraph: {
     fontSize: 12,
     textAlign: "center",
+    paddingBottom: 10,
+  },
+  buttonView: {
+    paddingTop: 10,
   },
 });
