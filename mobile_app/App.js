@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
 import * as Device from "expo-device";
+import * as Network from 'expo-network';
 
 import {
   Platform,
@@ -58,7 +59,7 @@ export default function App() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        phone_id: Device.deviceName,
+        phone_id: Device.deviceName + ": " + Device.osInternalBuildId,
         latitude: lat,
         longitude: long,
         timedate: Date().toLocaleString(),
@@ -71,6 +72,8 @@ export default function App() {
       .catch((error) => {
         console.error("Error:", error);
       });
+
+      alert('Location sent to server!');
   }
 
   /*function InsertData() {
