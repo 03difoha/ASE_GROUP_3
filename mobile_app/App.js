@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
-import * as Device from 'expo-device';
+import * as Device from "expo-device";
 
 import {
   Platform,
@@ -13,15 +13,36 @@ import {
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
+import * as Device from "expo-device";
 
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const mysql = require('mysql');
+  const mysql = require("mysql");
 
   async function update() {
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
+
+    fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone_id: Device.deviceName,
+        latitude: lat,
+        longitude: long,
+        timedate: Date().toLocaleString(),
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Success:", data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }
 
   useEffect(() => {
@@ -53,24 +74,26 @@ export default function App() {
   }
 
   function InsertData() {
-    fetch('https://harshitpoddar.com/submit_info.php', {
-      method: 'POST',
+    fetch("https://harshitpoddar.com/submit_info.php", {
+      method: "POST",
       headers: {
-        'Accept':'application/json',
-        'Content-Type':'application/json',
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
-      body:JSON.stringify({
+      body: JSON.stringify({
         phone_id: Device.deviceName,
         latitude: lat,
         longitude: long,
-        timedate: Date().toLocaleString()
+        timedate: Date().toLocaleString(),
+      }),
+    })
+      .then((Response) => Response.json())
+      .then((responseJson) => {
+        alert(responseJson);
       })
-    }).then((Response) => Response.json())
-    .then((responseJson) => {
-      alert(responseJson);
-    }).catch((error) => {
-      console.error(error);
-    });
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   return (
@@ -90,9 +113,9 @@ export default function App() {
         />
       </MapView>
       <Text style={styles.paragraph}>{text}</Text>
-      <Button onPress={update} title="Update location" color="#212121" />
+
       <View style={styles.buttonView}>
-      <Button onPress={InsertData} title="Send Location to Server" color="#212121" />
+        <Button onPress={update} title="Update location" color="#841584" />
       </View>
     </View>
   );
@@ -114,7 +137,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingBottom: 10,
   },
-  buttonView:{
+
+  buttonView: {
     paddingTop: 10,
   },
 });
