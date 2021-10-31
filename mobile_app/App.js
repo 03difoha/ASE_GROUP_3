@@ -13,15 +13,13 @@ import {
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
-import * as Device from "expo-device";
 
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const mysql = require("mysql");
 
-  async function update() {
-    let location = await Location.getCurrentPositionAsync({});
+  function update(location) {
+    console.log(location);
     setLocation(location);
 
     fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
@@ -58,7 +56,7 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-      update();
+      Location.watchPositionAsync({}, update);
     })();
   }, []);
 
