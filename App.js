@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
+import * as Device from 'expo-device';
+
 import {
   Platform,
   StyleSheet,
@@ -15,24 +17,11 @@ import * as Location from "expo-location";
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const mysql = require('mysql');
+
   async function update() {
     let location = await Location.getCurrentPositionAsync({});
     setLocation(location);
-
-    fetch("https://81ivknhzsa.execute-api.us-east-1.amazonaws.com/dev/hello", {
-      method: "POST", // or 'PUT'
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(location),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Success:", data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
   }
 
   useEffect(() => {
@@ -48,7 +37,6 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-
       update();
     })();
   }, []);
@@ -62,6 +50,27 @@ export default function App() {
     text = JSON.stringify(location);
     lat = location.coords.latitude;
     long = location.coords.longitude;
+  }
+
+  function InsertData() {
+    fetch('https://harshitpoddar.com/submit_info.php', {
+      method: 'POST',
+      headers: {
+        'Accept':'application/json',
+        'Content-Type':'application/json',
+      },
+      body:JSON.stringify({
+        phone_id: Device.deviceName,
+        latitude: lat,
+        longitude: long,
+        timedate: Date().toLocaleString()
+      })
+    }).then((Response) => Response.json())
+    .then((responseJson) => {
+      alert(responseJson);
+    }).catch((error) => {
+      console.error(error);
+    });
   }
 
   return (
@@ -81,7 +90,10 @@ export default function App() {
         />
       </MapView>
       <Text style={styles.paragraph}>{text}</Text>
-      <Button onPress={update} title="Update location" color="#841584" />
+      <Button onPress={update} title="Update location" color="#212121" />
+      <View style={styles.buttonView}>
+      <Button onPress={InsertData} title="Send Location to Server" color="#212121" />
+      </View>
     </View>
   );
 }
@@ -100,5 +112,9 @@ const styles = StyleSheet.create({
   paragraph: {
     fontSize: 12,
     textAlign: "center",
+    paddingBottom: 10,
+  },
+  buttonView:{
+    paddingTop: 10,
   },
 });
