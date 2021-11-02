@@ -22,7 +22,7 @@ export default function App() {
   async function update() {
     let connState = await Network.getNetworkStateAsync();
     if(connState.isInternetReachable == true){
-      let location = await Location.getCurrentPositionAsync({});
+      let location = await Location.getCurrentPositionAsync({});   
       setLocation(location);
       console.log(location);
       alert("Data sent to server!")
@@ -45,10 +45,8 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-
-      Location.watchPositionAsync({}, update);
-
-      //update();
+      //Location.watchPositionAsync({}, update);
+      update();
     })();
   }, []);
 
