@@ -20,9 +20,16 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState(null);
 
   async function update() {
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);
-    console.log(location);
+    let connState = await Network.getNetworkStateAsync();
+    if(connState.isInternetReachable == true){
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      console.log(location);
+      alert("Data sent to server!")
+    }
+    else{
+      alert("Check internet connection!");
+    }
   }
 
   useEffect(() => {
@@ -38,7 +45,9 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
+
       Location.watchPositionAsync({}, update);
+
       //update();
     })();
   }, []);
@@ -72,8 +81,7 @@ export default function App() {
       .catch((error) => {
         console.error("Error:", error);
       });
-
-      alert('Location sent to server!');
+      //alert('Location sent to server!');
   }
 
   /*function InsertData() {
