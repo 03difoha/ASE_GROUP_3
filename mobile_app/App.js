@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
 import * as Device from "expo-device";
@@ -18,6 +18,7 @@ import * as Location from "expo-location";
 export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const ref = useRef(null);
 
   async function update() {
     let connState = await Network.getNetworkStateAsync();
@@ -48,6 +49,12 @@ export default function App() {
       //Location.watchPositionAsync({}, update);
       update();
     })();
+
+  const interval = setInterval(() => update(), 60000);
+  return () => {
+    clearInterval(interval);
+  };
+
   }, []);
 
   let lat = 0;
@@ -82,6 +89,8 @@ export default function App() {
       //alert('Location sent to server!');
   }
 
+  
+
   /*function InsertData() {
     fetch("https://harshitpoddar.com/submit_info.php", {
       method: "POST",
@@ -104,6 +113,7 @@ export default function App() {
         console.error(error);
       });
   }*/
+  //setInterval(, 10000);
 
   return (
     <View style={styles.container}>
@@ -124,11 +134,12 @@ export default function App() {
       <Text style={styles.paragraph}>{text}</Text>
 
       <View style={styles.buttonView}>
-        <Button onPress={update} title="Update location" color="#841584" />
+        <Button name="updLoc" onPress={update} title="Update location" color="#841584" />
       </View>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
