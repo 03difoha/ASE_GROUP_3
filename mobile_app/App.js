@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
 import * as Device from "expo-device";
-import * as Network from 'expo-network';
+import * as Network from "expo-network";
 
 import {
   Platform,
@@ -22,13 +22,12 @@ export default function App() {
 
   async function update() {
     let connState = await Network.getNetworkStateAsync();
-    if(connState.isInternetReachable == true){
-      let location = await Location.getCurrentPositionAsync({});   
+    if (connState.isInternetReachable == true) {
+      let location = await Location.getCurrentPositionAsync({});
       setLocation(location);
       console.log(location);
-      alert("Data sent to server!")
-    }
-    else{
+      alert("Data sent to server!");
+    } else {
       alert("Check internet connection!");
     }
   }
@@ -50,12 +49,21 @@ export default function App() {
       update();
     })();
 
-  const interval = setInterval(() => update(), 60000);
-  return () => {
-    clearInterval(interval);
-  };
-
+    const interval = setInterval(() => update(), 10000);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
+
+  function format_location_text(location) {
+    for (const [key, value] of Object.entries(location)) {
+      if (typeof value === "object") {
+        format_location_text(value);
+      } else {
+        text = text.concat(`${key}: ${value}\n`);
+      }
+    }
+  }
 
   let lat = 0;
   let long = 0;
@@ -63,7 +71,8 @@ export default function App() {
   if (errorMsg) {
     text = errorMsg;
   } else if (location) {
-    text = JSON.stringify(location);
+    text = "";
+    format_location_text(location);
     lat = location.coords.latitude;
     long = location.coords.longitude;
 
@@ -86,34 +95,8 @@ export default function App() {
       .catch((error) => {
         console.error("Error:", error);
       });
-      //alert('Location sent to server!');
+    //alert('Location sent to server!');
   }
-
-  
-
-  /*function InsertData() {
-    fetch("https://harshitpoddar.com/submit_info.php", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phone_id: Device.deviceName,
-        latitude: lat,
-        longitude: long,
-        timedate: Date().toLocaleString(),
-      }),
-    })
-      .then((Response) => Response.json())
-      .then((responseJson) => {
-        alert(responseJson);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }*/
-  //setInterval(, 10000);
 
   return (
     <View style={styles.container}>
@@ -132,14 +115,17 @@ export default function App() {
         />
       </MapView>
       <Text style={styles.paragraph}>{text}</Text>
-
       <View style={styles.buttonView}>
-        <Button name="updLoc" onPress={update} title="Update location" color="#841584" />
+        <Button
+          name="updLoc"
+          onPress={update}
+          title="Update location"
+          color="#841584"
+        />
       </View>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -149,16 +135,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   map: {
-    width: 500,
-    height: 600,
+    width: 600,
+    height: 500,
   },
+  left: {
+    alignSelf: "flex-start",
+    display: "flex",
+  },
+
   paragraph: {
     fontSize: 12,
-    textAlign: "center",
+    textAlign: "left",
     paddingBottom: 10,
   },
 
   buttonView: {
     paddingTop: 10,
+    display: "flex",
   },
 });
