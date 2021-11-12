@@ -4,6 +4,7 @@ import MapView from "react-native-maps";
 import * as Device from "expo-device";
 import * as Network from "expo-network";
 
+
 import {
   Platform,
   StyleSheet,
@@ -67,6 +68,8 @@ export default function App() {
 
   let lat = 0;
   let long = 0;
+  let hm_points = [{latitude: lat, longitude: long, weight: 1}]
+
   let text = "Waiting..";
   if (errorMsg) {
     text = errorMsg;
@@ -75,6 +78,13 @@ export default function App() {
     format_location_text(location);
     lat = location.coords.latitude;
     long = location.coords.longitude;
+    hm_points = [{latitude: lat, longitude: long, weight: 1},
+      {latitude: lat + 0.0001, longitude: long + 0.0001, weight: 1},
+      {latitude: lat - 0.0001, longitude: long - 0.0001, weight: 1},
+      {latitude: lat - 0.0001, longitude: long + 0.0001, weight: 1},
+      {latitude: lat + 0.0001, longitude: long - 0.0001, weight: 1},
+      {latitude: lat, longitude: long + 0.00015, weight: 1},
+      {latitude: lat, longitude: long - 0.00015, weight: 1}]; 
 
     fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
       method: "POST", // or 'PUT'
@@ -91,6 +101,7 @@ export default function App() {
       .then((response) => response.json())
       .then((data) => {
         console.log("Success:", data);
+        
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -109,6 +120,18 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
       >
+        
+
+      
+      <MapView.Heatmap points={hm_points}
+                              opacity={1}
+                              radius={20}
+                              maxIntensity={100}
+                              gradientSmoothing={10}
+                              heatmapMode={"POINTS_DENSITY"}
+        />
+      
+
         <MapView.Marker
           coordinate={{ latitude: lat, longitude: long }}
           title={"Your Current Location"}
