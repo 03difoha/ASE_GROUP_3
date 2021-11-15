@@ -4,6 +4,7 @@ import MapView from "react-native-maps";
 import * as Device from "expo-device";
 import * as Network from "expo-network";
 
+
 import {
   Platform,
   StyleSheet,
@@ -82,6 +83,7 @@ export default function App() {
     // update();
   }, []);
 
+
   return (
     <View style={styles.container}>
       <MapView
@@ -93,6 +95,18 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
       >
+        
+
+      
+      <MapView.Heatmap points={hm_points}
+                              opacity={1}
+                              radius={20}
+                              maxIntensity={100}
+                              gradientSmoothing={10}
+                              heatmapMode={"POINTS_DENSITY"}
+        />
+      
+
         <MapView.Marker
           coordinate={{
             latitude: lat,
