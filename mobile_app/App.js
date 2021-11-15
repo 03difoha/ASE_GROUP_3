@@ -4,7 +4,6 @@ import MapView from "react-native-maps";
 import * as Device from "expo-device";
 import * as Network from "expo-network";
 
-
 import {
   Platform,
   StyleSheet,
@@ -25,6 +24,16 @@ export default function App() {
   const [markers, setMarkers] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [internetReachable, setInternetReachable] = useState(null);
+
+  const hm_points = [
+    { latitude: lat, longitude: long, weight: 1 },
+    { latitude: lat + 0.0001, longitude: long + 0.0001, weight: 1 },
+    { latitude: lat - 0.0001, longitude: long - 0.0001, weight: 1 },
+    { latitude: lat - 0.0001, longitude: long + 0.0001, weight: 1 },
+    { latitude: lat + 0.0001, longitude: long - 0.0001, weight: 1 },
+    { latitude: lat, longitude: long + 0.00015, weight: 1 },
+    { latitude: lat, longitude: long - 0.00015, weight: 1 },
+  ];
 
   const ref = useRef(null);
 
@@ -83,7 +92,6 @@ export default function App() {
     // update();
   }, []);
 
-
   return (
     <View style={styles.container}>
       <MapView
@@ -95,17 +103,14 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
       >
-        
-
-      
-      <MapView.Heatmap points={hm_points}
-                              opacity={1}
-                              radius={20}
-                              maxIntensity={100}
-                              gradientSmoothing={10}
-                              heatmapMode={"POINTS_DENSITY"}
+        <MapView.Heatmap
+          points={hm_points}
+          opacity={1}
+          radius={20}
+          maxIntensity={100}
+          gradientSmoothing={10}
+          heatmapMode={"POINTS_DENSITY"}
         />
-      
 
         <MapView.Marker
           coordinate={{

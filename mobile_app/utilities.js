@@ -7,31 +7,26 @@ const unit = 0.0225;
 
 function get_bounding_box(lat, long) {
   //   console.log(lat - unit);
-  var top_left_corner = {
+  var tl = {
     latitude: lat - unit,
     longitude: long + unit,
   };
-  var top_right_corner = {
+  var tr = {
     latitude: lat + unit,
     longitude: long + unit,
   };
 
-  var bottom_left_corner = {
+  var bl = {
     latitude: lat - unit,
     longitude: long - unit,
   };
 
-  var bottom_right_corner = {
+  var br = {
     latitude: lat + unit,
     longitude: long - unit,
   };
 
-  return [
-    top_left_corner,
-    top_right_corner,
-    bottom_left_corner,
-    bottom_right_corner,
-  ];
+  return [tl, tr, bl, br];
 }
 
 export { get_bounding_box };
