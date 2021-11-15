@@ -16,29 +16,55 @@ import {
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 
+import { get_bounding_box } from "./utilities";
+
 export default function App() {
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [location, setLocation] = useState();
+  const [lat, setLat] = useState(0);
+  const [long, setLong] = useState(0);
+  const [markers, setMarkers] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [internetReachable, setInternetReachable] = useState(null);
+
   const ref = useRef(null);
 
   async function update() {
-    let connState = await Network.getNetworkStateAsync();
-    if (connState.isInternetReachable == true) {
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-      console.log(location);
-      alert("Data sent to server!");
-    } else {
-      alert("Check internet connection!");
-    }
-  }
+    let location = await Location.getCurrentPositionAsync({});
+    setLat(location.coords.latitude);
+    setLong(location.coords.longitude);
+    setLocation(location);
+    setMarkers(get_bounding_box(lat, long));
 
+    // console.log(location);
+
+    // fetch(
+    //   "https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello",
+    //   {
+    //     method: "POST", // or 'PUT'
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       phone_id: Device.deviceName + ": " + Device.osInternalBuildId,
+    //       latitude: lat,
+    //       longitude: long,
+    //       timedate: Date().toLocaleString(),
+    //     }),
+    //   }
+    // )
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log("Success:", data);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error:", error);
+    //   });
+  }
   useEffect(() => {
     (async () => {
-      if (Platform.OS === "android" && !Constants.isDevice) {
-        setErrorMsg(
-          "Oops, this will not work on Snack in an Android emulator. Try it on your device!"
-        );
+      const isInternetReachable = await Network.getNetworkStateAsync();
+      if (!isInternetReachable) {
+        setErrorMsg("Check internet connection and restart app");
         return;
       }
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -46,68 +72,17 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-      //Location.watchPositionAsync({}, update);
+
       update();
     })();
 
-    const interval = setInterval(() => update(), 10000);
-    return () => {
-      clearInterval(interval);
-    };
+    // const interval = setInterval(() => update(), 10000);
+    // return () => {
+    //   clearInterval(interval);
+    // };
+    // update();
   }, []);
 
-  function format_location_text(location) {
-    for (const [key, value] of Object.entries(location)) {
-      if (typeof value === "object") {
-        format_location_text(value);
-      } else {
-        text = text.concat(`${key}: ${value}\n`);
-      }
-    }
-  }
-
-  let lat = 0;
-  let long = 0;
-  let hm_points = [{latitude: lat, longitude: long, weight: 1}]
-
-  let text = "Waiting..";
-  if (errorMsg) {
-    text = errorMsg;
-  } else if (location) {
-    text = "";
-    format_location_text(location);
-    lat = location.coords.latitude;
-    long = location.coords.longitude;
-    hm_points = [{latitude: lat, longitude: long, weight: 1},
-      {latitude: lat + 0.0001, longitude: long + 0.0001, weight: 1},
-      {latitude: lat - 0.0001, longitude: long - 0.0001, weight: 1},
-      {latitude: lat - 0.0001, longitude: long + 0.0001, weight: 1},
-      {latitude: lat + 0.0001, longitude: long - 0.0001, weight: 1},
-      {latitude: lat, longitude: long + 0.00015, weight: 1},
-      {latitude: lat, longitude: long - 0.00015, weight: 1}]; 
-
-    fetch("https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello", {
-      method: "POST", // or 'PUT'
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phone_id: Device.deviceName + ": " + Device.osInternalBuildId,
-        latitude: lat,
-        longitude: long,
-        timedate: Date().toLocaleString(),
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Success:", data);
-        
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-    //alert('Location sent to server!');
-  }
 
   return (
     <View style={styles.container}>
@@ -133,11 +108,17 @@ export default function App() {
       
 
         <MapView.Marker
-          coordinate={{ latitude: lat, longitude: long }}
+          coordinate={{
+            latitude: lat,
+            longitude: long,
+          }}
           title={"Your Current Location"}
         />
+        {markers.map((marker, index) => (
+          <MapView.Marker key={index} coordinate={marker} />
+        ))}
       </MapView>
-      <Text style={styles.paragraph}>{text}</Text>
+      <Text style={styles.paragraph}>{errorMsg}</Text>
       <View style={styles.buttonView}>
         <Button
           name="updLoc"
