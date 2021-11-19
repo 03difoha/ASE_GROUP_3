@@ -35,6 +35,99 @@ export default function App() {
     { latitude: lat, longitude: long - 0.00015, weight: 1 },
   ];
 
+  const hm_points2 = [
+    { latitude: lat + 0.0001, longitude: long + 0.0001},
+    { latitude: lat, longitude: long + 0.00015},
+    { latitude: lat - 0.0001, longitude: long + 0.0001},
+    { latitude: lat - 0.0001, longitude: long - 0.0001},
+    { latitude: lat, longitude: long - 0.00015},
+    { latitude: lat + 0.0001, longitude: long - 0.0001},
+   
+    
+  ];
+
+  let map_areas = require('./Map_Areas_smol.json');
+
+  //console.log("hellohelolheol", map_areas['geometry']['coordinates'][0].length);
+  //console.log("it'sthecords", map_areas['geometry']['coordinates'][0]);
+  //console.log("hellohelolheol[111]", map_areas['geometry']['coordinates'][3].length);
+  //console.log("it'sthecords[1111]", map_areas['geometry']['coordinates'][3]);
+
+/*
+  const polygon = map_areas['geometry']['coordinates'].map(coords_list => { 
+    coords_list.map(xy => {
+
+      let smol_coords = {    
+        latitude: xy[1],
+        longitude: xy[0],
+      }
+      
+      return smol_coords;
+    }
+
+  )});
+ */
+
+
+   
+ 
+    const polygon = map_areas['geometry']['coordinates'][0].map(coordsArr => { 
+      let coords = {
+          latitude: coordsArr[1],
+          longitude: coordsArr[0],
+        }
+        return coords;
+  }); 
+
+
+  let map_areas_big2 = require('./Areasgeo.json');
+
+  var polygon_list = [];
+  const areas_length = map_areas_big2['features'].length;
+
+
+
+  for (var i = 0; i < 6; i++) {
+
+    const polygon_x =  map_areas_big2['features'][i]['geometry']['coordinates'][0].map(coordsArr => { 
+      let coords = {
+          latitude: coordsArr[1],
+          longitude: coordsArr[0],
+        }
+        return coords;
+      });
+
+      polygon_list.push([polygon_x, i]);
+
+      };
+
+  
+
+      
+
+
+  //console.log("The feats", map_areas_big2['features'][2]['geometry']['coordinates'][0].length);
+  //console.log("The feats", map_areas_big2['features'][2]['geometry']['coordinates'][0]);
+    //console.log('My my!!!', polygon_list[0])
+    console.log('how much ive missed', areas_length)
+
+
+  /*
+  // json_map_areas['geometry']['coordinates'][1] =  [[lat + 0.0001, long + 0.0001], [lat + 0.0001, long - 0.0001], [lat  0.0001, long + 0.0001]]
+  const polygon_array = []
+  
+  for (var i = 0; i < map_areas['geometry']['coordinates'][1].length - 2; i++) {
+    console.log("i", i);
+
+  
+
+  polygon_array.push(polygon_x)
+
+  };
+*/
+  //console.log("coord", polygon);
+
+
   const ref = useRef(null);
 
   async function update() {
@@ -112,11 +205,34 @@ export default function App() {
           heatmapMode={"POINTS_DENSITY"}
         />
 
+        <MapView.Polygon
+            coordinates={hm_points2}
+            fillColor='rgba(200,20,20,0.5)'
+            strokeWidth= {10} />
+          
+            
+        {polygon_list.map((poly_pair) => (
+          
+          <MapView.Polygon 
+            key = {poly_pair[1]}
+            coordinates = {poly_pair[0]}
+            fillColor = 'rgba(0,0,250,0.1)'
+            strokeWidth = {1}
+            />
+        ))}                   
+
         <MapView.Marker
           coordinate={{
             latitude: lat,
             longitude: long,
           }}
+          title={"Your Current Location"}
+        />
+
+        <MapView.Marker
+          coordinate={
+            polygon[0]
+          }
           title={"Your Current Location"}
         />
         {markers.map((marker, index) => (
