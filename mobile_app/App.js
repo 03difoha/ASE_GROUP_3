@@ -80,7 +80,7 @@ export default function App() {
   }); 
 
 
-  let map_areas_big2 = require('./Areasgeo.json');
+  let map_areas_big2 = require('./Map_Areas.json');
 
   var polygon_list = [];
   const areas_length = map_areas_big2['features'].length;
@@ -109,7 +109,7 @@ export default function App() {
   //console.log("The feats", map_areas_big2['features'][2]['geometry']['coordinates'][0].length);
   //console.log("The feats", map_areas_big2['features'][2]['geometry']['coordinates'][0]);
     //console.log('My my!!!', polygon_list[0])
-    console.log('how much ive missed', areas_length)
+    console.log('#ofcounties', areas_length)
 
 
   /*
