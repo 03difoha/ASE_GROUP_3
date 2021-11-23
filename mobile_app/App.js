@@ -15,7 +15,7 @@ import {
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 
-import { get_bounding_box } from "./utilities";
+import { get_bounding_box, send_location } from "./utilities";
 
 export default function App() {
   const [location, setLocation] = useState();
@@ -43,31 +43,7 @@ export default function App() {
     setLong(location.coords.longitude);
     setLocation(location);
     setMarkers(get_bounding_box(lat, long));
-
-    // console.log(location);
-
-    // fetch(
-    //   "https://3tx3vlacv6.execute-api.us-east-1.amazonaws.com/dev/hello",
-    //   {
-    //     method: "POST", // or 'PUT'
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       phone_id: Device.deviceName + ": " + Device.osInternalBuildId,
-    //       latitude: lat,
-    //       longitude: long,
-    //       timedate: Date().toLocaleString(),
-    //     }),
-    //   }
-    // )
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     console.log("Success:", data);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error:", error);
-    //   });
+    send_location(markers);
   }
   useEffect(() => {
     (async () => {

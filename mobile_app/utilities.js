@@ -29,4 +29,21 @@ function get_bounding_box(lat, long) {
   return [tl, tr, bl, br];
 }
 
-export { get_bounding_box };
+async function send_location(markers) {
+  fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {
+    method: "POST", // or 'PUT'
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ markers: markers }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("Success:", data);
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}
+
+export { get_bounding_box, send_location };
