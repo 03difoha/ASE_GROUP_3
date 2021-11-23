@@ -7,14 +7,16 @@ api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('name', help='Specify your name')
 
+HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT',
+                'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
-@api.route('/hello/')
+
+@api.route('/hello/', methods=HTTP_METHODS)
 class HelloWorld(Resource):
 
     @api.doc(parser=parser)
-    def get(self):
-        args = parser.parse_args()
-        name = args['name']
+    def post(self):
+        data = request.json
         sparql = SPARQLWrapper(
             "http://landregistry.data.gov.uk/landregistry/query")
         sparql.setQuery("""
@@ -54,6 +56,15 @@ class HelloWorld(Resource):
         # return res
         # else:
         # return "name not match"
+
+
+@api.route('/', methods=['GET', 'POST'])
+class test(Resource):
+
+    @api.doc(parser=parser)
+    def post(self):
+        data = request.json
+        return jsonify(data)
 
 
 if __name__ == '__main__':

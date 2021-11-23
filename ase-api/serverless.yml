@@ -1,6 +1,6 @@
 org: 03difoha
-app: ase_backend
-service: ase_backend
+app: ase
+service: ase
 
 frameworkVersion: '2'
 
