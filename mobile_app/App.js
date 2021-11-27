@@ -3,6 +3,9 @@ import { StatusBar } from "expo-status-bar";
 import MapView from "react-native-maps";
 import * as Device from "expo-device";
 import * as Network from "expo-network";
+import Geocoder from 'react-native-geocoder';
+import Geocode from "react-geocode";
+
 
 import {
   Platform,
@@ -11,6 +14,8 @@ import {
   View,
   Dimensions,
   Button,
+  TextInput,
+  Keyboard
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
@@ -24,6 +29,12 @@ export default function App() {
   const [markers, setMarkers] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [internetReachable, setInternetReachable] = useState(null);
+  const [isAppTime, setAppTime] = useState(false);
+  const [postCodeMode, setPostCodeMode] = useState(false);
+  
+  
+  var [postCodeInput, setPostCodeInput] = useState("");
+  var tempInput = ''
 
   const hm_points = [
     { latitude: lat, longitude: long, weight: 1 },
@@ -67,10 +78,9 @@ export default function App() {
     // };
     // update();
   }, []);
-
-  return (
-    <View style={styles.container}>
-      <MapView
+  function MainApp() {
+    return <View style={styles.container}>
+    <MapView
         style={styles.map}
         region={{
           latitude: lat,
@@ -87,7 +97,7 @@ export default function App() {
           gradientSmoothing={10}
           heatmapMode={"POINTS_DENSITY"}
         />
-
+  
         <MapView.Marker
           coordinate={{
             latitude: lat,
@@ -107,10 +117,171 @@ export default function App() {
           title="Update location"
           color="#841584"
         />
+
+        <Text>
+
+          </Text>
+
+        <BackButton />
+        
+
       </View>
     </View>
+  }
+
+  function Clickcheck() {
+    console.log('clicked and this is prev app time: ', isAppTime)
+    setAppTime(true)
+    console.log('And this is new app time: ', isAppTime)
+  }
+  
+  function EnterButton(props) {
+    return (
+  
+  
+      <Button 
+      title = 'Use my location'
+      onPress =  {() => Clickcheck()} >
+       
+    </Button>
+         
+    );
+  }
+
+  function BackClickcheck() {
+    console.log('clicked and this is prev app time: ', isAppTime)
+    setAppTime(false)
+    console.log('And this is new app time: ', isAppTime)
+  }
+  
+  function BackButton(props) {
+    return (
+  
+  
+      <Button 
+      title = 'Back Now'
+      onPress =  {() => BackClickcheck()} >
+       
+    </Button>
+         
+    );
+  }
+
+  function PostClickcheck(text) {
+    console.log('The post code1: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
+    
+    setPostCodeInput(text)
+
+    postCodeInput = text
+    
+    setPostCodeMode(true)
+
+    
+    console.log('The post code2: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
+
+    Keyboard.dismiss()
+
+    //Geocoder.geocodeAddress('New York').then(res => {})
+      // res is an Array of geocoding object (see below)
+  
+  console.log(Location.geocodeAsync('BN2 3QA'))
+
+
+  Geocode.fromAddress("Eiffel Tower").then(
+    (response) => {
+      const { lat, lng } = response.results[0].geometry.location;
+      console.log(lat, lng);
+    },
+    (error) => {
+      console.error(error);
+    }
   );
-}
+
+  
+
+  }
+
+  function PostCodeButton(props) {
+    return (
+
+      <Button 
+      title = 'Enter A Postode'
+      onPress =  {() => PostClickcheck(tempInput)} >
+       
+    </Button>
+         
+    );
+  }
+
+  function setTempin(text) {
+    tempInput = text
+  }
+  
+  function IntroPage() {
+  
+    return <View style={[styles.text_stuff, styles.container]}>
+  
+      <Text style={[styles.text_stuff]}>
+        
+        Hey there, 
+
+          Would you like to use your phone's current location or enter a postcode??
+          
+        </Text> 
+
+        <Text> 
+
+        </ Text>
+  
+        <EnterButton />
+
+        <Text> 
+
+        </ Text>
+
+        <PostCodeButton />
+
+        <Text> 
+
+        </ Text>
+
+        <TextInput  style={styles.text_input} 
+
+                    onChangeText = {(text) => setTempin(text)}
+                      
+                    onSubmitEditing = {() => PostClickcheck(tempInput)}  >
+                       </TextInput>
+
+
+
+  
+       </View>
+
+       
+  
+    
+  
+      
+  }
+  
+  function Greeting(props) {
+    const isAppTime = props.isAppTime;
+    console.log('is it apptime? ', isAppTime)
+    if (isAppTime) {
+      return <MainApp />;
+    }
+    return <IntroPage />;
+  }
+  
+
+
+
+
+  return (    
+    <Greeting isAppTime = {isAppTime} />
+    );
+
+  }
 
 const styles = StyleSheet.create({
   container: {
@@ -138,4 +309,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     display: "flex",
   },
+
+  text_stuff: {
+    textAlign: 'center', 
+    fontWeight: 'bold',
+    fontSize: 20,
+    backgroundColor: 'orange',
+    padding: 5
+  },
+
+  text_input: {
+    width: 200, 
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 5
+  }
+
 });
