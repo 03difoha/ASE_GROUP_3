@@ -43,7 +43,7 @@ export default function App() {
     setLong(location.coords.longitude);
     setLocation(location);
     setMarkers(get_bounding_box(lat, long));
-    send_location(markers);
+    send_location(lat, long);
   }
   useEffect(() => {
     (async () => {

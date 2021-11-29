@@ -8,8 +8,8 @@ const unit = 0.0225;
 function get_bounding_box(lat, long) {
   //   console.log(lat - unit);
   var tl = {
-    latitude: lat - unit,
-    longitude: long + unit,
+    latitude: lat + unit,
+    longitude: long - unit,
   };
   var tr = {
     latitude: lat + unit,
@@ -22,20 +22,20 @@ function get_bounding_box(lat, long) {
   };
 
   var br = {
-    latitude: lat + unit,
-    longitude: long - unit,
+    latitude: lat - unit,
+    longitude: long + unit,
   };
 
   return [tl, tr, bl, br];
 }
 
-async function send_location(markers) {
+async function send_location(lat, long) {
   fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {
     method: "POST", // or 'PUT'
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ markers: markers }),
+    body: JSON.stringify({ lat: lat, long: long }),
   })
     .then((response) => response.json())
     .then((data) => {
