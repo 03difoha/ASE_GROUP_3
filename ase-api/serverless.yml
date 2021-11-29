@@ -37,4 +37,5 @@ package:
      - ase-api/.serverless/ase.zip
      - ase-api/venv
      - ase-api/node_modules
+     - ase-api/ukpostcodes.csv
 
