@@ -1,9 +1,11 @@
+from os import closerange
 from flask import Flask, request, jsonify, render_template
 from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
+from coordinatesToPostcodes import coordinatesToPostcodes
+
 app = Flask(__name__)
 api = Api(app)
-
 parser = reqparse.RequestParser()
 parser.add_argument('name', help='Specify your name')
 
@@ -64,7 +66,9 @@ class test(Resource):
     @api.doc(parser=parser)
     def post(self):
         data = request.json
-        return jsonify(data)
+        print(data)
+        c = coordinatesToPostcodes()
+        return c.get_postcodes_in_square(data).to_json()
 
 
 if __name__ == '__main__':
