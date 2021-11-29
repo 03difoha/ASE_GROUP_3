@@ -1,8 +1,8 @@
-from os import closerange
 from flask import Flask, request, jsonify, render_template
 from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
-from coordinatesToPostcodes import coordinatesToPostcodes
+import requests
+# from coordinatesToPostcodes import coordinatesToPostcodes
 
 app = Flask(__name__)
 api = Api(app)
@@ -67,8 +67,15 @@ class test(Resource):
     def post(self):
         data = request.json
         print(data)
-        c = coordinatesToPostcodes()
-        return c.get_postcodes_in_square(data).to_json()
+        # c = coordinatesToPostcodes()
+        # return c.get_postcodes_in_square(data).to_json()
+        res = requests.get(
+            "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(data['tl']['longitude'], data['tl']['latitude']))
+        # res = jsonify(res)
+        print(res.json())
+        for i in res.json()['result']:
+            print(i['postcode'])
+        # return res
 
 
 if __name__ == '__main__':
