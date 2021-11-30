@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, render_template
 from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
+import json
+import numpy as np
 
 app = Flask(__name__)
 api = Api(app)
@@ -13,8 +15,7 @@ HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT',
 
 
 def get_prices(postcodes):
-    print(postcodes)
-    pc = ['BN1 1FN', 'BN2 1RA', 'BN2 1RY', 'BN2 1RD', 'BN1 1FZ']
+    # print(postcodes)
     sparql = SPARQLWrapper(
         "http://landregistry.data.gov.uk/landregistry/query")
     sparql.setQuery("""
@@ -35,20 +36,24 @@ def get_prices(postcodes):
               lrppi:pricePaid ?amount ;
               lrppi:transactionDate ?date ;
               lrppi:transactionCategory/skos:prefLabel ?category.
-
-       OPTIONAL {?addr lrcommon:county ?county}
-       OPTIONAL {?addr lrcommon:paon ?paon}
-       OPTIONAL {?addr lrcommon:saon ?saon}
-       OPTIONAL {?addr lrcommon:street ?street}
-       OPTIONAL {?addr lrcommon:town ?town}
       }
-      ORDER BY ?amount
       """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-    # res = [result["amount"]["value"] + " | " + result["postcode"]["value"] +
-    #        " | " + result["street"]["value"] for result in results["results"]["bindings"]]
-    return results
+    res = {}
+
+    price = []
+
+    for result in results["results"]["bindings"]:
+        price.append(int(result["amount"]["value"]))
+        res[result["postcode"]["value"]] = {
+            "lat": 0, "long": 0, "avg_price": np.average(price)}
+
+    print(res)
+    return res
+    # max_price = max(res.values())
+
+    # return {key: (value / max_price) for key, value in res.items()}
 
 
 @api.route('/', methods=['GET', 'POST'])
@@ -59,13 +64,17 @@ class test(Resource):
         data = request.json
         res = requests.get(
             "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(data['long'], data['lat']))
-        # res = jsonify(res)
         pc_list = []
-        # print(res)
-        # print(res.json())
         for i in res.json()['result']:
             pc_list.append(i['postcode'])
-        return(get_prices(pc_list))
+        price_data = get_prices(pc_list)
+        print(price_data)
+        for r in res.json()['result']:
+            if r['postcode'] in price_data.keys():
+                print(r['postcode'])
+                price_data[r['postcode']]['lat'] = r["latitude"]
+                price_data[r['postcode']]['long'] = r["longitude"]
+        return price_data
 
 
 if __name__ == '__main__':
