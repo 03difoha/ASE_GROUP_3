@@ -12,15 +12,12 @@ HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT',
                 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
 
-@api.route('/hello/', methods=HTTP_METHODS)
-class HelloWorld(Resource):
-
-    @api.doc(parser=parser)
-    def post(self):
-        data = request.json
-        sparql = SPARQLWrapper(
-            "http://landregistry.data.gov.uk/landregistry/query")
-        sparql.setQuery("""
+def get_prices(postcodes):
+    print(postcodes)
+    pc = ['BN1 1FN', 'BN2 1RA', 'BN2 1RY', 'BN2 1RD', 'BN1 1FZ']
+    sparql = SPARQLWrapper(
+        "http://landregistry.data.gov.uk/landregistry/query")
+    sparql.setQuery("""
      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
      prefix owl: <http://www.w3.org/2002/07/owl#>
      prefix xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -32,7 +29,7 @@ class HelloWorld(Resource):
      SELECT ?paon ?saon ?street ?town ?county ?postcode ?amount ?date ?category
      WHERE
      {
-       VALUES ?postcode {"BR5 1BY"^^xsd:string}
+       VALUES ?postcode {""" + '"{0}"'.format('" "'.join(postcodes)) + """}
        ?addr lrcommon:postcode ?postcode.
        ?transx lrppi:propertyAddress ?addr ;
               lrppi:pricePaid ?amount ;
@@ -47,16 +44,11 @@ class HelloWorld(Resource):
       }
       ORDER BY ?amount
       """)
-        sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-        # res=[]
-        res = [result["amount"]["value"] + " | " + result["postcode"]["value"] +
-               " | " + result["street"]["value"] for result in results["results"]["bindings"]]
-        return res
-        # if (name=="piyush"):
-        # return res
-        # else:
-        # return "name not match"
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    # res = [result["amount"]["value"] + " | " + result["postcode"]["value"] +
+    #        " | " + result["street"]["value"] for result in results["results"]["bindings"]]
+    return results
 
 
 @api.route('/', methods=['GET', 'POST'])
@@ -65,14 +57,16 @@ class test(Resource):
     @api.doc(parser=parser)
     def post(self):
         data = request.json
-        print(data)
         res = requests.get(
             "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(data['long'], data['lat']))
         # res = jsonify(res)
-        print(res.json())
+        pc_list = []
+        # print(res)
+        # print(res.json())
         for i in res.json()['result']:
-            print(i['postcode'])
-        return res.json()
+            pc_list.append(i['postcode'])
+        print(get_prices(pc_list))
+        # return res.json()
 
 
 if __name__ == '__main__':
