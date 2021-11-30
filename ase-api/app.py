@@ -1,5 +1,10 @@
 from flask import Flask, request, jsonify, render_template
-from flask_restplus import Api, Resource, reqparse
+#from werkzeug.utils import cached_property
+
+
+
+
+from flask_restx import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
 import json
