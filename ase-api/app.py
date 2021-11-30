@@ -65,8 +65,7 @@ class test(Resource):
         # print(res.json())
         for i in res.json()['result']:
             pc_list.append(i['postcode'])
-        print(get_prices(pc_list))
-        # return res.json()
+        return(get_prices(pc_list))
 
 
 if __name__ == '__main__':
