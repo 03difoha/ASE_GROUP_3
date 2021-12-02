@@ -3,7 +3,6 @@ from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
 import json
-import numpy as np
 
 app = Flask(__name__)
 api = Api(app)
@@ -42,14 +41,21 @@ def get_prices(postcodes):
     results = sparql.query().convert()
     res = {}
 
-    price = []
+    curr_pos_code = ''
+
+    last_pos_code = ''
 
     for result in results["results"]["bindings"]:
+        curr_pos_code = result["postcode"]["value"]
+
+        if curr_pos_code != last_pos_code:
+            price = []
+        last_pos_code = curr_pos_code
         price.append(int(result["amount"]["value"]))
         res[result["postcode"]["value"]] = {
-            "lat": 0, "long": 0, "avg_price": np.average(price)}
+            "lat": 0, "long": 0, "avg_price": sum(price) / len(price)}
 
-    print(res)
+    # print(res)
     return res
     # max_price = max(res.values())
 
