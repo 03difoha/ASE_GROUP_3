@@ -28,3 +28,14 @@ plugins:
   - serverless-wsgi
   - serverless-python-requirements
   - serverless-offline
+
+package:
+  excludeDevDependencies: true
+  exclude:
+     - ase-api/__pycache__
+     - ase-api/.serverless
+     - ase-api/.serverless/ase.zip
+     - ase-api/venv
+     - ase-api/node_modules
+     - ase-api/ukpostcodes.csv
+
