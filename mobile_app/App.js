@@ -28,9 +28,9 @@ export default function App() {
   const [long, setLong] = useState(0);
   const [markers, setMarkers] = useState([]);
   const [hm_points, setHM_Points] = useState([{ latitude: lat, longitude: long, weight: 1 }]);
+  const [manual_flag, setManual_Flag] = useState(false);
 
-
-  console.log(hm_points)
+  //console.log(hm_points)
   const [errorMsg, setErrorMsg] = useState("");
   const [internetReachable, setInternetReachable] = useState(null);
   const [isAppTime, setAppTime] = useState(false);
@@ -56,26 +56,62 @@ export default function App() {
   const ref = useRef(null);
 
   async function update() {
+
+    let manual_flag = postCodeMode
+
+    console.log('poscodemode?: ', postCodeMode)
+    console.log('flag', manual_flag)
+
+    if (manual_flag == false) {
+
     let location = await Location.getCurrentPositionAsync({});
     setLat(location.coords.latitude);
     setLong(location.coords.longitude);
-    setLocation(location);
-    setMarkers(get_bounding_box(lat, long));
 
-    // Yes I am aware that send location was neatly off in utilities, Hook calls were messing up trying to get betwen the files so I've just moved it here to minimise faff.
+    console.log('location example: ', location)
+    setLocation(location);
+    }
+
+    if (manual_flag == true) {
+
+      let manual_location = await Location.geocodeAsync(postCodeInput);
+      console.log('postcodeinput', postCodeInput)
+      console.log('man_loc', manual_location)
+
+      console.log('man_lat: ', manual_location[0]['latitude'])
+
+      setLat(manual_location[0]['latitude']);
+      setLong(manual_location[0]['longitude']);
+      //setLocation(manual_location);
+
+      console.log(manual_flag, lat, long)
+    }
+    
+   
+    setMarkers(get_bounding_box(lat, long));
+    
+
+    // Yeah soz, I am aware that send location was neatly off in utilities, Hook calls were messing up trying to get betwen the files so I've just moved it here to minimise addtional faff.
     
     
-    function neaten_the_data_to_the_format_specified(hm_points) {
+    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
       
       //console.log(Object.entries(hm_points)[1][1]['avg_price'])
 
-      //console.log(Object.values(hm_points))
+      console.log('Before Mapping: ', Object.values(dirty_hm_points))
 
-      let hm_points_curr = Object.values(hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
+      console.log('Before Mapping: ', dirty_hm_points['message'] == "Internal Server Error")
 
-      //console.log('currr: ', hm_points_curr);
+      if (dirty_hm_points['message'] != "Internal Server Error") {
+
+      let hm_points_curr = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
+
+      console.log('After Mapping: ', hm_points_curr);
       
       setHM_Points(hm_points_curr);
+      }
+      //console.log('After Setting: ', hm_points);
+
     }
     
     async function send_location(lat, long) {
@@ -104,7 +140,10 @@ export default function App() {
         });
     }
 
+    
     send_location(lat, long);
+    
+
     //console.log('hm_points_DAta: ', data);
 
     //console.log('hm_points_Set: ', hm_points);
@@ -143,11 +182,11 @@ export default function App() {
         }}
       >
 
-        {console.log('currr: ', )}
+       
         <MapView.Heatmap
           points={hm_points}
           opacity={0.6}
-          radius={150}
+          radius={50}
           maxIntensity={100}
           gradientSmoothing={10}
           heatmapMode={"POINTS_DENSITY"}
@@ -185,9 +224,9 @@ export default function App() {
   }
 
   function Clickcheck() {
-    console.log('clicked and this is prev app time: ', isAppTime)
+    //console.log('clicked and this is prev app time: ', isAppTime)
     setAppTime(true)
-    console.log('And this is new app time: ', isAppTime)
+    //console.log('And this is new app time: ', isAppTime)
   }
   
   function EnterButton(props) {
@@ -204,9 +243,9 @@ export default function App() {
   }
 
   function BackClickcheck() {
-    console.log('clicked and this is prev app time: ', isAppTime)
+    //console.log('clicked and this is prev app time: ', isAppTime)
     setAppTime(false)
-    console.log('And this is new app time: ', isAppTime)
+    //console.log('And this is new app time: ', isAppTime)
   }
   
   function BackButton(props) {
@@ -221,9 +260,26 @@ export default function App() {
          
     );
   }
+  /*
+  function post2lat(text) {
+    //let local = await Location.geocodeAsync(text)
+
+    let location = await Location.geocodeAsync('baker street london');
+    local.then( result => {
+
+      console.log('hello hello post code time:', result)
+      this.setState({name: result});
+     }, function(error) {
+      this.setState({name: error});
+     });
+
+     console.log('hello hello post code time:', result)
+
+  } */
 
   function PostClickcheck(text) {
-    console.log('The post code1: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
+    
+    // console.log('The post code1: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
     
     setPostCodeInput(text)
 
@@ -231,14 +287,20 @@ export default function App() {
     
     setPostCodeMode(true)
 
+    console.log('in clickcheck - poscodemode?: ', postCodeMode)
+
+    console.log('and the input:   ', postCodeInput)
+
     
-    console.log('The post code2: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
+    //post2lat(postCodeInput)
+    
+    // console.log('The post code2: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
 
     Keyboard.dismiss()
 
     //Geocoder.geocodeAddress('New York').then(res => {})
       // res is an Array of geocoding object (see below)
-  
+  /*
   console.log(Location.geocodeAsync('BN2 3QA'))
 
 
@@ -250,7 +312,7 @@ export default function App() {
     (error) => {
       console.error(error);
     }
-  );
+  );  */
 
   
 
@@ -280,7 +342,7 @@ export default function App() {
         
         Hey there, 
 
-          Would you like to use your phone's current location or enter a postcode??
+          Would you like to use your phone's current location or enter a postcode?
           
         </Text> 
 
@@ -321,7 +383,7 @@ export default function App() {
   
   function Greeting(props) {
     const isAppTime = props.isAppTime;
-    console.log('is it apptime? ', isAppTime)
+    //console.log('is it apptime? ', isAppTime)
     if (isAppTime) {
       return <MainApp />;
     }
