@@ -103,7 +103,7 @@ export default function App() {
       }
     
    
-    setMarkers(get_bounding_box(lat, long));
+    // setMarkers(get_bounding_box(lat, long));
     
 
     // Yeah soz, I am aware that send location was neatly off in utilities, Hook calls were messing up trying to get betwen the files so I've just moved it here to minimise addtional faff.
@@ -203,8 +203,8 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
 
-        onPress={(e) =>  setLatLongClick([e.nativeEvent.coordinate]) 
-                         } // latitude: lat, longitude: long})}
+        onPress={(e) =>  {setLatLongClick([e.nativeEvent.coordinate]), 
+                         console.log('click', latlongclick)}} // latitude: lat, longitude: long})}
 
       >
 
@@ -229,7 +229,7 @@ export default function App() {
         />
         {markers.map((marker, index) => (
           <MapView.Marker key={index} coordinate={marker} />
-        ))}
+        ))}  
       </MapView>
       <Text style={styles.paragraph}>{errorMsg}</Text>
           
@@ -376,6 +376,31 @@ export default function App() {
     tempInput = text
   }
 
+
+  function SetFlagsOnClick(n) {
+
+    if (n == 1) {
+        setLocation_Flag(false)
+        setPostCode_Flag(false)
+        setClick_Flag(true)
+        update()
+      }
+      else if (n == 2) {
+        setLocation_Flag(false)
+        setPostCode_Flag(true)
+        setClick_Flag(false)
+        update()
+      }
+      else if (n == 3) {
+        setLocation_Flag(true)
+        setPostCode_Flag(false)
+        setClick_Flag(false)
+        update()
+      }
+    }
+
+  
+
   function ClickModeButton(props) {
     return (
 
@@ -402,21 +427,15 @@ export default function App() {
 
       ) : (
 
-        <Button 
+        <Button
     
         color = "red"
         width = {50}
         height = {50}
         title = 'Click View Mode'
 
-        onPress =  {() => {setLocation_Flag(false),
-                           setPostCode_Flag(false),
-                           setClick_Flag(true),
-                           update()}} 
-
-        //onClick = {() => setPostCode_Flag(true)}
-
-        //onClick = 
+        onPress = {() => {SetFlagsOnClick(1)}}
+ 
         />
       )}
 
@@ -461,10 +480,7 @@ export default function App() {
         height = {50}
         title = 'Post Code Mode'
 
-        onPress =  {() => {setLocation_Flag(false),
-                           setPostCode_Flag(true),
-                           setClick_Flag(false),
-                           update()}} 
+        onPress = {() => {SetFlagsOnClick(2)}}
 
         //onClick = {() => setPostCode_Flag(true)}
 
@@ -508,11 +524,8 @@ export default function App() {
         height = {50}
         title = 'Current Location'
 
-        onPress = {() => {setLocation_Flag(true),
-                   setPostCode_Flag(false),
-                   setClick_Flag(false),
-                   update()}}
-/>
+        onPress = {() => {SetFlagsOnClick(3)}}
+        />
       )
       
       ); 
