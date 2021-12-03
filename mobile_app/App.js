@@ -15,7 +15,8 @@ import {
   Dimensions,
   Button,
   TextInput,
-  Keyboard
+  Keyboard,
+  Pressable
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
@@ -28,7 +29,10 @@ export default function App() {
   const [long, setLong] = useState(0);
   const [markers, setMarkers] = useState([]);
   const [hm_points, setHM_Points] = useState([{ latitude: lat, longitude: long, weight: 1 }]);
-  const [manual_flag, setManual_Flag] = useState(false);
+  const [location_flag, setLocation_Flag] = useState(true);
+  const [postcode_flag, setPostCode_Flag] = useState(false);
+  const [click_flag, setClick_Flag] = useState(false);
+  const [latlongclick, setLatLongClick] = useState({ latitude: lat, longitude: long});
 
   //console.log(hm_points)
   const [errorMsg, setErrorMsg] = useState("");
@@ -57,12 +61,14 @@ export default function App() {
 
   async function update() {
 
-    let manual_flag = postCodeMode
+    console.log()
+    console.log('Flags: ')
+    console.log()
+    console.log('Location: ', location_flag)
+    console.log('postcode: ', postcode_flag)
+    console.log('Click: ', click_flag)
 
-    console.log('poscodemode?: ', postCodeMode)
-    console.log('flag', manual_flag)
-
-    if (manual_flag == false) {
+    if (location_flag == true) {
 
     let location = await Location.getCurrentPositionAsync({});
     setLat(location.coords.latitude);
@@ -72,20 +78,29 @@ export default function App() {
     setLocation(location);
     }
 
-    if (manual_flag == true) {
+    if (postcode_flag == true) {
 
-      let manual_location = await Location.geocodeAsync(postCodeInput);
+      let postcode_location = await Location.geocodeAsync(postCodeInput);
       console.log('postcodeinput', postCodeInput)
-      console.log('man_loc', manual_location)
+      console.log('man_loc', postcode_location)
 
-      console.log('man_lat: ', manual_location[0]['latitude'])
+      console.log('man_lat: ', postcode_location[0]['latitude'])
 
-      setLat(manual_location[0]['latitude']);
-      setLong(manual_location[0]['longitude']);
-      //setLocation(manual_location);
+      setLat(postcode_location[0]['latitude']);
+      setLong(postcode_location[0]['longitude']);
 
-      console.log(manual_flag, lat, long)
+      console.log(lat, long)
     }
+
+    if (click_flag == true) {
+
+      setLat(latlongclick.latitude);
+      setLong(latlongclick.longitude);
+
+      console.log('curr lat long (from click): ', lat, long)
+
+      //setLocation(location);
+      }
     
    
     setMarkers(get_bounding_box(lat, long));
@@ -140,6 +155,9 @@ export default function App() {
         });
     }
 
+
+    console.log('sending lat long ##################### : ', lat, long)
+
     
     send_location(lat, long);
     
@@ -148,6 +166,8 @@ export default function App() {
 
     //console.log('hm_points_Set: ', hm_points);
   }
+
+
   useEffect(() => {
     (async () => {
       const isInternetReachable = await Network.getNetworkStateAsync();
@@ -170,6 +190,8 @@ export default function App() {
     // };
     // update();
   }, []);
+
+
   function MainApp() {
     return <View style={styles.container}>
     <MapView
@@ -180,9 +202,15 @@ export default function App() {
           latitudeDelta: 0.04,
           longitudeDelta: 0.05,
         }}
+
+        onPress={(e) =>  setLatLongClick([e.nativeEvent.coordinate]) 
+                         } // latitude: lat, longitude: long})}
+
       >
 
-       
+        {console.log('hm points: ', hm_points)}
+        {console.log('colicicicikckcick', latlongclick)}
+        {console.log('curr lat long: ', lat, long)}
         <MapView.Heatmap
           points={hm_points}
           opacity={0.6}
@@ -204,13 +232,24 @@ export default function App() {
         ))}
       </MapView>
       <Text style={styles.paragraph}>{errorMsg}</Text>
+          
+
+      <View flex = {0}
+      flexDirection = 'row'
+      paddingBottom = {15}
+      //width = {200}
+      >
+      <ClickModeButton />
+
+      <PostCodeButton_InMain />
+      
+      </View>
+
       <View style={styles.buttonView}>
-        <Button
-          name="updLoc"
-          onPress={update}
-          title="Update location"
-          color="#841584"
-        />
+
+      
+      <LocationModeButton />
+        
 
         <Text>
 
@@ -220,6 +259,7 @@ export default function App() {
         
 
       </View>
+      
     </View>
   }
 
@@ -298,13 +338,13 @@ export default function App() {
 
     Keyboard.dismiss()
 
-    //Geocoder.geocodeAddress('New York').then(res => {})
+    //Geocoder.geocodepostcode('New York').then(res => {})
       // res is an Array of geocoding object (see below)
   /*
   console.log(Location.geocodeAsync('BN2 3QA'))
 
 
-  Geocode.fromAddress("Eiffel Tower").then(
+  Geocode.frompostcode("Eiffel Tower").then(
     (response) => {
       const { lat, lng } = response.results[0].geometry.location;
       console.log(lat, lng);
@@ -330,8 +370,153 @@ export default function App() {
     );
   }
 
+  
+
   function setTempin(text) {
     tempInput = text
+  }
+
+  function ClickModeButton(props) {
+    return (
+
+      <View flex = {1}
+      
+      alignItems = 'flex-start'
+      justifyContent= 'center'
+      width = {50}>
+
+
+
+      {click_flag ? (
+
+        <Button 
+            
+        color = "green"
+        width = {50}
+        height = {50}
+        title = 'Click View Mode'
+
+        onPress = {() => {update(), console.log('we clicked')}}
+
+        />
+
+      ) : (
+
+        <Button 
+    
+        color = "red"
+        width = {50}
+        height = {50}
+        title = 'Click View Mode'
+
+        onPress =  {() => {setLocation_Flag(false),
+                           setPostCode_Flag(false),
+                           setClick_Flag(true),
+                           update()}} 
+
+        //onClick = {() => setPostCode_Flag(true)}
+
+        //onClick = 
+        />
+      )}
+
+      </ View>
+
+    );
+  }
+
+  function PostCodeButton_InMain(props) {
+    return (
+
+      
+      <View 
+      
+      flex = {1}
+      
+      alignItems = 'flex-end'
+      justifyContent= 'center'
+      width = {55} >
+
+
+
+      {postcode_flag ? (
+
+        <Button 
+            
+        color = "green"
+        width = {50}
+        height = {50}
+        title = 'Post Code Mode'
+
+        onPress = {() => {update(), console.log('we clicked')}}
+
+        />
+
+      ) : (
+
+        <Button 
+    
+        color = "red"
+        width = {50}
+        height = {50}
+        title = 'Post Code Mode'
+
+        onPress =  {() => {setLocation_Flag(false),
+                           setPostCode_Flag(true),
+                           setClick_Flag(false),
+                           update()}} 
+
+        //onClick = {() => setPostCode_Flag(true)}
+
+        //onClick = 
+        />
+      )}
+
+      </ View>
+    
+
+    );
+  }
+
+
+  function LocationModeButton(props) {
+    return (  
+
+      
+      location_flag ? (
+
+        <Button 
+            
+        color = "green"
+        width = {50}
+        height = {50}
+        title = 'Current Location'
+
+        onPress = {() => {update(), console.log('we clicked')}}
+        
+
+        />
+
+        
+
+      ) : (
+
+        <Button 
+    
+        color = "red"
+        width = {50}
+        height = {50}
+        title = 'Current Location'
+
+        onPress = {() => {setLocation_Flag(true),
+                   setPostCode_Flag(false),
+                   setClick_Flag(false),
+                   update()}}
+/>
+      )
+      
+      ); 
+  
   }
   
   function IntroPage() {
@@ -398,7 +583,7 @@ export default function App() {
     <Greeting isAppTime = {isAppTime} />
     );
 
-  }
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -425,6 +610,13 @@ const styles = StyleSheet.create({
   buttonView: {
     paddingTop: 10,
     display: "flex",
+  },
+
+  round_buttonView: {
+    paddingTop: 10,
+    display: "flex",
+    borderRadius:50,
+    backgroundColor:'#fff'
   },
 
   text_stuff: {
