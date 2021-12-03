@@ -266,6 +266,7 @@ export default function App() {
   function Clickcheck() {
     //console.log('clicked and this is prev app time: ', isAppTime)
     setAppTime(true)
+    SetFlagsOnClick(3)
     //console.log('And this is new app time: ', isAppTime)
   }
   
@@ -337,6 +338,12 @@ export default function App() {
     // console.log('The post code2: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
 
     Keyboard.dismiss()
+
+    setAppTime(true)
+
+    SetFlagsOnClick(2)
+    update()
+    update()
 
     //Geocoder.geocodepostcode('New York').then(res => {})
       // res is an Array of geocoding object (see below)
