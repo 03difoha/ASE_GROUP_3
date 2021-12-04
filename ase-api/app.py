@@ -1,14 +1,8 @@
 from flask import Flask, request, jsonify, render_template
-#from werkzeug.utils import cached_property
-
-
-
-
-from flask_restx import Api, Resource, reqparse
+from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
 import json
-import numpy as np
 
 app = Flask(__name__)
 api = Api(app)
@@ -45,20 +39,42 @@ def get_prices(postcodes):
       """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
+
+    return results
+
+
+def format_all_prices(postcodes, price_data):
     res = {}
 
-    price = []
+    curr_pos_code = ''
 
-    for result in results["results"]["bindings"]:
-        price.append(int(result["amount"]["value"]))
-        res[result["postcode"]["value"]] = {
-            "lat": 0, "long": 0, "avg_price": np.average(price)}
+    last_pos_code = ''
 
-    print(res)
+    for p in price_data["results"]["bindings"]:
+        curr_pos_code = p["postcode"]["value"]
+        if curr_pos_code != last_pos_code:
+            price = []
+        last_pos_code = curr_pos_code
+        price.append(int(p["amount"]["value"]))
+        res[p["postcode"]["value"]] = {
+            "lat": 0, "long": 0, "avg_price": sum(price) / len(price)}
+
+    for r in postcodes.json()['result']:
+        if r['postcode'] in res.keys():
+            print(r['postcode'])
+            res[r['postcode']]['lat'] = r["latitude"]
+            res[r['postcode']]['long'] = r["longitude"]
+
     return res
-    # max_price = max(res.values())
 
-    # return {key: (value / max_price) for key, value in res.items()}
+
+def get_postcodes(position):
+    postcodes = requests.get(
+        "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(position['long'], position['lat']))
+    pc_list = []
+    for i in postcodes.json()['result']:
+        pc_list.append(i['postcode'])
+    return {"list": pc_list, "data": postcodes}
 
 
 @api.route('/', methods=['GET', 'POST'])
@@ -66,20 +82,23 @@ class test(Resource):
 
     @api.doc(parser=parser)
     def post(self):
-        data = request.json
-        res = requests.get(
-            "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(data['long'], data['lat']))
-        pc_list = []
-        for i in res.json()['result']:
-            pc_list.append(i['postcode'])
-        price_data = get_prices(pc_list)
-        print(price_data)
-        for r in res.json()['result']:
-            if r['postcode'] in price_data.keys():
-                print(r['postcode'])
-                price_data[r['postcode']]['lat'] = r["latitude"]
-                price_data[r['postcode']]['long'] = r["longitude"]
-        return price_data
+        position = request.json
+        postcodes = get_postcodes(position)
+        price_data = get_prices(postcodes["list"])
+        return format_all_prices(postcodes["data"], price_data)
+
+
+@api.route('/pricesByYear', methods=['GET', 'POST'])
+class test(Resource):
+
+    @api.doc(parser=parser)
+    def post(self):
+        position = request.json
+        postcodes = get_postcodes(position)
+        price_data = get_prices(postcodes["list"])
+        return format_prices_by_year(postcodes["data"], price_data)
+
+        # return res
 
 
 if __name__ == '__main__':
