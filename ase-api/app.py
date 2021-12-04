@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request
 from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
@@ -60,8 +60,6 @@ def format_all_prices(postcodes, price_data):
 def format_prices_by_year(postcodes, price_data):
     res = {}
     for p in price_data["results"]["bindings"]:
-        # print(p)
-        print(p["postcode"]["value"])
         if p["postcode"]["value"] not in res:
             # if no record of postcode in res, then create a new empty record
             res[p["postcode"]["value"]] = {"lat": 0, "long": 0, 'years': {}}
@@ -82,7 +80,6 @@ def format_prices_by_year(postcodes, price_data):
 def attach_long_lat_to_prices(postcodes, data):
     for r in postcodes:
         if r['postcode'] in data.keys():
-            print(r['postcode'])
             data[r['postcode']]['lat'] = r["latitude"]
             data[r['postcode']]['long'] = r["longitude"]
 
