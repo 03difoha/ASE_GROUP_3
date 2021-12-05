@@ -131,9 +131,12 @@ def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per
     idx = 0
     for pc, lat, long, ys in zip(postcodes, lats, longs, years_per_pc):
         res[pc] = { "lat": lat, "long": long, "years": {}}
-        
+        ap_list = []
         for ap, y in zip(avg_prices[idx:idx+ys], years[idx:idx+ys]):
-            res[pc]['years'][y[0:4]] = [ap]
+            if y[0:4] not in res[pc]['years']:
+                res[pc]['years'][y[0:4]] = [ap]
+            else:
+                res[pc]['years'][y[0:4]].append(ap)
             idx = idx+1
         
 
@@ -272,8 +275,7 @@ def get_tests_format_prices_by_year():
     # - input length: 0, 1, >1
     # - missing price data: y/n
     # - at most one sale per postcode: y/n
-    # - at most one sale per year per postcode
-
+    # - at most one sale per year per postcode: y/n
 
     tests = []
 
@@ -283,7 +285,7 @@ def get_tests_format_prices_by_year():
     expected = expected_output_by_year([], [], [], [], [], [])
     tests.append((pc_data, price_data, expected))
 
-    # input length 1 
+    # input length 1, n, y, y
     input_length = 1
     pc_list = ['BN1 9RU']
     lats = get_ran_lats(input_length)
@@ -297,6 +299,62 @@ def get_tests_format_prices_by_year():
     expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, [1])
     tests.append((pc_data, price_data, expected))
 
+    # input length >1 y, y, y
+    input_length = 3
+    indeces = [0, 2] # idxs corresponding to postcodes from pc_list where there is a sale
+    pc_list = ['BN1 9RU', 'HF4 8FT', 'GGG FFF']
+    pc_list_prices = [pc_list[index] for index in indeces]
+    lats_in = get_ran_lats(input_length)
+    longs_in = get_ran_longs(input_length)
+    lats_out = [lats_in[index] for index in indeces]
+    longs_out = [longs_in[index] for index in indeces]    
+    dates = ['2020', '2021']
+    years_per_pc = [1, 1]
+    prices = ['10', '5']
+    avg_prices = [10, 5]
+
+    price_data = dummy_sparql(pc_list_prices, prices, dates)
+    pc_data = dummy_postcodes(pc_list, lats_in, longs_in)["data"]
+    expected = expected_output_by_year(pc_list_prices, lats_out, longs_out, avg_prices, dates, years_per_pc)
+    tests.append((pc_data, price_data, expected))
+
+    # input length >1, n, n, y
+    input_length = 3
+    data_length = 6 # sparql returns 6 bindings
+    indeces = [0, 0, 0, 1, 1, 2] # idxs corresponding to sales in a postcode
+    pc_list = ['BN1 9RU', 'HF4 8FT', 'GGG FFF']
+    pc_list_prices = [pc_list[index] for index in indeces]
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+    dates = get_ran_dates(input_length)
+    prices = ['10', '5', '3', '20', '10', '99']
+    dates = ['2010', '2011', '2012', '2013', '2014', '2015']
+    years_per_pc = [3, 2, 1]
+    avg_prices = [10, 5, 3, 20, 10, 99]
+
+    price_data = dummy_sparql(pc_list_prices, prices, dates)
+    pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, years_per_pc)
+    tests.append((pc_data, price_data, expected))
+
+    # input length >1, n, n, n
+    input_length = 3
+    data_length = 6 # sparql returns 6 bindings
+    indeces = [0, 0, 0, 1, 1, 2] # idxs corresponding to sales in a postcode
+    pc_list = ['BN1 9RU', 'HF4 8FT', 'GGG FFF']
+    pc_list_prices = [pc_list[index] for index in indeces]
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+    dates = get_ran_dates(input_length)
+    prices = ['10', '5', '3', '20', '10', '99']
+    dates = ['2010', '2010', '2010', '2013', '2014', '2015']
+    years_per_pc = [3, 2, 1]
+    avg_prices = [10, 5, 3, 20, 10, 99]
+
+    price_data = dummy_sparql(pc_list_prices, prices, dates)
+    pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, years_per_pc)
+    tests.append((pc_data, price_data, expected))
 
     return tests
 
