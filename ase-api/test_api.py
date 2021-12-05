@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from requests.models import Response
 from string import ascii_lowercase, digits
 
-from app import format_all_prices, get_postcodes, attach_long_lat_to_prices
+from app import format_prices_by_year, format_all_prices, get_postcodes, attach_long_lat_to_prices
 
 def test_get_postcodes():
     position = {"lat": "50.84120684080165", "long": "-0.13691759734549602" }
@@ -122,18 +122,18 @@ def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per
     :param lats: list of floats representing latitudes
     :param longs: list of floats representing longitudes
     :param avg_prices: list of floats representing avg prices
-    :param years: list of strings representing years
+    :param years: list of strings representing years or dates in form YYYY-__-__
     :param years_per_pc: list of integers representing #years there is data for for each pc
     :return: dict as in get_postcodes() in app.py
     """ 
 
     res = {}
-
+    idx = 0
     for pc, lat, long, ys in zip(postcodes, lats, longs, years_per_pc):
         res[pc] = { "lat": lat, "long": long, "years": {}}
-        idx = 0
+        
         for ap, y in zip(avg_prices[idx:idx+ys], years[idx:idx+ys]):
-            res[pc]['years'][y] = [ap]
+            res[pc]['years'][y[0:4]] = [ap]
             idx = idx+1
         
 
@@ -277,4 +277,30 @@ def get_tests_format_prices_by_year():
 
     tests = []
 
+    ## Empty input
+    price_data = dummy_sparql([], [], [])
+    pc_data = dummy_postcodes([], [], [])["data"]
+    expected = expected_output_by_year([], [], [], [], [], [])
+    tests.append((pc_data, price_data, expected))
+
+    # input length 1 
+    input_length = 1
+    pc_list = ['BN1 9RU']
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+    prices = ['10']
+    dates = get_ran_dates(input_length)
+    avg_prices = [10]
+
+    price_data = dummy_sparql(pc_list, prices, dates)
+    pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, [1])
+    tests.append((pc_data, price_data, expected))
+
+
     return tests
+
+@pytest.mark.parametrize("postcodes,price_data,expected", get_tests_format_prices_by_year())
+def test_format_prices_by_year(postcodes, price_data, expected):
+    res = format_prices_by_year(postcodes, price_data)
+    assert res == expected
