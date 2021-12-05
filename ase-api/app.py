@@ -1,13 +1,8 @@
 from flask import Flask, request
-from flask_restplus import Api, Resource, reqparse
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
-import json
 
 app = Flask(__name__)
-api = Api(app)
-parser = reqparse.RequestParser()
-parser.add_argument('name', help='Specify your name')
 
 
 def get_prices(postcodes):
@@ -95,24 +90,24 @@ def get_postcodes(position):
     return {"list": pc_list, "data": postcodes}
 
 
-@api.route('/', methods=['GET', 'POST'])
-class test(Resource):
-    @api.doc(parser=parser)
-    def post(self):
-        position = request.json
-        postcodes = get_postcodes(position)
-        price_data = get_prices(postcodes["list"])
-        return format_all_prices(postcodes["data"], price_data)
+def test(x):
+    return 1 + x
 
 
-@api.route('/pricesByYear', methods=['GET', 'POST'])
-class test(Resource):
-    @api.doc(parser=parser)
-    def post(self):
-        position = request.json
-        postcodes = get_postcodes(position)
-        price_data = get_prices(postcodes["list"])
-        return format_prices_by_year(postcodes["data"], price_data)
+@app.route('/',  methods=['GET', 'POST'])
+def all_years_average():
+    position = request.json
+    postcodes = get_postcodes(position)
+    price_data = get_prices(postcodes["list"])
+    return format_all_prices(postcodes["data"], price_data)
+
+
+@app.route('/pricesByYear', methods=['GET', 'POST'])
+def prices_by_year():
+    position = request.json
+    postcodes = get_postcodes(position)
+    price_data = get_prices(postcodes["list"])
+    return format_prices_by_year(postcodes["data"], price_data)
 
 
 if __name__ == '__main__':
