@@ -114,6 +114,31 @@ def expected_output(postcodes, lats, longs, avg_prices):
     
     return res
 
+def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per_pc):
+    """
+    expected_output creates output in same form as format_prices_by_year() in app.py to be used as expected test output
+
+    :param postcodes: list of strings representing postcodes
+    :param lats: list of floats representing latitudes
+    :param longs: list of floats representing longitudes
+    :param avg_prices: list of floats representing avg prices
+    :param years: list of strings representing years
+    :param years_per_pc: list of integers representing #years there is data for for each pc
+    :return: dict as in get_postcodes() in app.py
+    """ 
+
+    res = {}
+
+    for pc, lat, long, ys in zip(postcodes, lats, longs, years_per_pc):
+        res[pc] = { "lat": lat, "long": long, "years": {}}
+        idx = 0
+        for ap, y in zip(avg_prices[idx:idx+ys], years[idx:idx+ys]):
+            res[pc]['years'][y] = [ap]
+            idx = idx+1
+        
+
+    return res
+
 
 def get_tests_attach_long_lat_to_prices():
     # Partitioning:
@@ -247,6 +272,9 @@ def get_tests_format_prices_by_year():
     # - input length: 0, 1, >1
     # - missing price data: y/n
     # - at most one sale per postcode: y/n
+    # - at most one sale per year per postcode
+
+
     tests = []
 
     return tests
