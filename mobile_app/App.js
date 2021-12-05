@@ -32,6 +32,7 @@ export default function App() {
   const [location_flag, setLocation_Flag] = useState(true);
   const [postcode_flag, setPostCode_Flag] = useState(false);
   const [click_flag, setClick_Flag] = useState(false);
+  const [postcode_keyboardfocus_flag, setPostCode_KeyboardFocus_Flag] = useState(false);
   const [latlongclick, setLatLongClick] = useState({ latitude: lat, longitude: long});
 
   //console.log(hm_points)
@@ -122,11 +123,11 @@ export default function App() {
 
       if (dirty_hm_points['message'] != "Internal Server Error") {
 
-      let hm_points_curr = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
 
-      console.log('After Mapping: ', hm_points_curr);
+      console.log('After Mapping: ', clean_hm_points);
       
-      setHM_Points(hm_points_curr);
+      setHM_Points(clean_hm_points);
 
       console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
       }
@@ -239,6 +240,9 @@ export default function App() {
           <MapView.Marker key={index} coordinate={marker} />
         ))}  
       </MapView>
+
+      <PostCode_Keyboard />
+
       <Text style={styles.paragraph}>{errorMsg}</Text>
           
 
@@ -264,6 +268,8 @@ export default function App() {
           </Text>
 
         <BackButton />
+
+       
         
 
       </View>
@@ -457,6 +463,34 @@ export default function App() {
     );
   }
 
+  function OnSubmit() {PostClickcheck(tempInput)
+                       setPostCode_KeyboardFocus_Flag(false)
+                       update()
+  }
+
+  function PostCode_Keyboard() {
+    return(
+
+      postcode_keyboardfocus_flag ? (
+
+        <TextInput  style={styles.text_input} 
+
+        autoFocus
+        
+
+            onChangeText = {(text) => setTempin(text)}
+              
+            onSubmitEditing = {() => OnSubmit()}  
+                                   
+            >
+               </TextInput> ) : (null)
+               
+               ) 
+              
+              }
+    
+  
+
   function PostCodeButton_InMain(props) {
     return (
 
@@ -493,7 +527,8 @@ export default function App() {
         height = {50}
         title = 'Post Code Mode'
 
-        onPress = {() => {SetFlagsOnClick(2)}}
+        onPress = {() => {SetFlagsOnClick(2),
+                          setPostCode_KeyboardFocus_Flag(true)}}
 
         //onClick = {() => setPostCode_Flag(true)}
 
