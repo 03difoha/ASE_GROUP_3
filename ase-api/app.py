@@ -91,10 +91,6 @@ def get_postcodes(position):
     return {"list": pc_list, "data": postcodes}
 
 
-def test(x):
-    return 1 + x
-
-
 @app.route('/',  methods=['GET', 'POST'])
 def all_years_average():
     position = request.json
