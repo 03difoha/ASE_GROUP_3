@@ -17,3 +17,6 @@ web-build/
 ase-api/venv
 ase-api/__pycache__/
 ase-api/.serverless
+
+
+/ase-api/Lib

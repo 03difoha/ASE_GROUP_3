@@ -1,20 +1,12 @@
-from flask import Flask, request, jsonify, render_template
-from flask_restplus import Api, Resource, reqparse
+from flask import Flask, request
 from SPARQLWrapper import SPARQLWrapper, JSON
 import requests
-import json
+
 
 app = Flask(__name__)
-api = Api(app)
-parser = reqparse.RequestParser()
-parser.add_argument('name', help='Specify your name')
-
-HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT',
-                'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
 
 def get_prices(postcodes):
-    # print(postcodes)
     sparql = SPARQLWrapper(
         "http://landregistry.data.gov.uk/landregistry/query")
     sparql.setQuery("""
@@ -39,48 +31,84 @@ def get_prices(postcodes):
       """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
+
+    return results
+
+
+def format_all_prices(postcodes, price_data):
     res = {}
-
     curr_pos_code = ''
-
     last_pos_code = ''
-
-    for result in results["results"]["bindings"]:
-        curr_pos_code = result["postcode"]["value"]
-
+    for p in price_data["results"]["bindings"]:
+        curr_pos_code = p["postcode"]["value"]
         if curr_pos_code != last_pos_code:
             price = []
         last_pos_code = curr_pos_code
-        price.append(int(result["amount"]["value"]))
-        res[result["postcode"]["value"]] = {
+        price.append(int(p["amount"]["value"]))
+        res[p["postcode"]["value"]] = {
             "lat": 0, "long": 0, "avg_price": sum(price) / len(price)}
 
-    # print(res)
+    res = attach_long_lat_to_prices(postcodes.json()['result'], res)
+
     return res
-    # max_price = max(res.values())
-
-    # return {key: (value / max_price) for key, value in res.items()}
 
 
-@api.route('/', methods=['GET', 'POST'])
-class test(Resource):
+def format_prices_by_year(postcodes, price_data):
+    res = {}
+    for p in price_data["results"]["bindings"]:
+        if p["postcode"]["value"] not in res:
+            # if no record of postcode in res, then create a new empty record
+            res[p["postcode"]["value"]] = {"lat": 0, "long": 0, 'years': {}}
+        else:
+            # if a record for this postcode exists, but not for this year then create an array with the current sale value in
+            if p['date']['value'][0:4] not in res[p["postcode"]["value"]]['years']:
+                res[p["postcode"]["value"]]['years'][p['date']
+                                                     ['value'][0:4]] = [int(p['amount']['value'])]
+            else:
+                # if we do have a record for this year already then append the current sale value onto the year array
+                res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]].append(
+                    int(p['amount']['value']))
 
-    @api.doc(parser=parser)
-    def post(self):
-        data = request.json
-        res = requests.get(
-            "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(data['long'], data['lat']))
-        pc_list = []
-        for i in res.json()['result']:
-            pc_list.append(i['postcode'])
-        price_data = get_prices(pc_list)
-        print(price_data)
-        for r in res.json()['result']:
-            if r['postcode'] in price_data.keys():
-                print(r['postcode'])
-                price_data[r['postcode']]['lat'] = r["latitude"]
-                price_data[r['postcode']]['long'] = r["longitude"]
-        return price_data
+    res = attach_long_lat_to_prices(postcodes.json()['result'], res)
+    return res
+
+
+def attach_long_lat_to_prices(postcodes, data):
+    for r in postcodes:
+        if r['postcode'] in data.keys():
+            data[r['postcode']]['lat'] = r["latitude"]
+            data[r['postcode']]['long'] = r["longitude"]
+
+    return data
+
+
+def get_postcodes(position):
+    postcodes = requests.get(
+        "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=2000".format(position['long'], position['lat']))
+    pc_list = []
+    for i in postcodes.json()['result']:
+        pc_list.append(i['postcode'])
+    return {"list": pc_list, "data": postcodes}
+
+
+def test(x):
+    return 1 + x
+
+
+@app.route('/',  methods=['GET', 'POST'])
+def all_years_average():
+    position = request.json
+    postcodes = get_postcodes(position)
+    price_data = get_prices(postcodes["list"])
+    return format_all_prices(postcodes["data"], price_data)
+
+
+@app.route('/pricesByYear', methods=['GET', 'POST'])
+def prices_by_year():
+    position = request.json
+    postcodes = get_postcodes(position)
+    price_data = get_prices(postcodes["list"])
+    return format_prices_by_year(postcodes["data"], price_data)
 
 
 if __name__ == '__main__':
