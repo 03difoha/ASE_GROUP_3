@@ -74,7 +74,7 @@ export default function App() {
     setLat(location.coords.latitude);
     setLong(location.coords.longitude);
 
-    console.log('location example: ', location)
+    console.log('curr lat long (from Location): ', location)
     setLocation(location);
     }
 
@@ -89,13 +89,16 @@ export default function App() {
       setLat(postcode_location[0]['latitude']);
       setLong(postcode_location[0]['longitude']);
 
-      console.log(lat, long)
+      console.log('curr lat long (from postcode): ', lat, long)
     }
 
     if (click_flag == true) {
 
-      setLat(latlongclick.latitude);
-      setLong(latlongclick.longitude);
+      console.log ('curr lat long (from click) double checking if latlongclick exists: ', latlongclick)
+      console.log()
+      console.log('more double checking of latlong: ', latlongclick[0]["latitude"], latlongclick[0]["longitude"])
+      setLat(latlongclick[0]["latitude"]);
+      setLong(latlongclick[0]["longitude"]);
 
       console.log('curr lat long (from click): ', lat, long)
 
@@ -113,9 +116,9 @@ export default function App() {
       
       //console.log(Object.entries(hm_points)[1][1]['avg_price'])
 
-      console.log('Before Mapping: ', Object.values(dirty_hm_points))
+      //console.log('Before Mapping: ', Object.values(dirty_hm_points))
 
-      console.log('Before Mapping: ', dirty_hm_points['message'] == "Internal Server Error")
+      //console.log('Before Mapping: ', dirty_hm_points['message'] == "Internal Server Error")
 
       if (dirty_hm_points['message'] != "Internal Server Error") {
 
@@ -124,12 +127,17 @@ export default function App() {
       console.log('After Mapping: ', hm_points_curr);
       
       setHM_Points(hm_points_curr);
+
+      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
       }
       //console.log('After Setting: ', hm_points);
 
     }
     
     async function send_location(lat, long) {
+
+      console.log('sending lat long ##################### does send even run? : ', lat, long)
+
       fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
         method: "POST", // or 'PUT'
         headers: {
@@ -140,7 +148,7 @@ export default function App() {
         .then((response) => response.json())
         .then((data) => {
           //console.log("Success:", data)
-          
+          console.log('sending lat long ##################### just about 2 send : ', lat, long)
           neaten_the_data_to_the_format_specified(data)
           
           //var dataa = data
@@ -156,7 +164,7 @@ export default function App() {
     }
 
 
-    console.log('sending lat long ##################### : ', lat, long)
+    console.log('sending lat long ##################### pre-sending : ', lat, long)
 
     
     send_location(lat, long);
@@ -210,7 +218,7 @@ export default function App() {
 
         {console.log('hm points: ', hm_points)}
         {console.log('colicicicikckcick', latlongclick)}
-        {console.log('curr lat long: ', lat, long)}
+        {console.log('curr lat long (at heatmap activation): ', lat, long)}
         <MapView.Heatmap
           points={hm_points}
           opacity={0.6}
@@ -342,8 +350,6 @@ export default function App() {
     setAppTime(true)
 
     SetFlagsOnClick(2)
-    update()
-    update()
 
     //Geocoder.geocodepostcode('New York').then(res => {})
       // res is an Array of geocoding object (see below)
@@ -387,23 +393,23 @@ export default function App() {
   function SetFlagsOnClick(n) {
 
     if (n == 1) {
-        setLocation_Flag(false)
-        setPostCode_Flag(false)
-        setClick_Flag(true)
-        update()
+        setLocation_Flag(false);
+        setPostCode_Flag(false);
+        setClick_Flag(true);
       }
       else if (n == 2) {
-        setLocation_Flag(false)
-        setPostCode_Flag(true)
-        setClick_Flag(false)
-        update()
+        setLocation_Flag(false);
+        setPostCode_Flag(true);
+        setClick_Flag(false);
       }
       else if (n == 3) {
-        setLocation_Flag(true)
-        setPostCode_Flag(false)
-        setClick_Flag(false)
-        update()
+        setLocation_Flag(true);
+        setPostCode_Flag(false);
+        setClick_Flag(false);
       }
+
+      update()
+
     }
 
   
