@@ -1,0 +1,204 @@
+import pytest
+import requests
+import random
+from datetime import date, timedelta
+from unittest.mock import Mock
+from requests.models import Response
+from string import ascii_lowercase, digits
+
+from app import format_all_prices, get_postcodes, attach_long_lat_to_prices
+
+def test_get_postcodes():
+    position = {"lat": "50.84120684080165", "long": "-0.13691759734549602" }
+    res = requests.get(
+        "https://api.postcodes.io/postcodes?lon={}&lat={}&limit=99&radius=200".format(position['long'], position['lat']))
+    print(res)
+    assert res.status_code == 200
+
+def get_ran_pcs(num):
+    chars = ascii_lowercase + digits
+    return [''.join(random.choice(chars) for _ in range(7)) for _ in range(num)]
+
+def get_ran_lats(num):
+    return [random.uniform(-90,90) for _ in range(num)]
+
+def get_ran_longs(num):
+    return [random.uniform(-180,180) for _ in range(num)]
+
+def get_ran_prices(num):
+    return [str(random.randint(0,100000)) for _ in range(num)]
+
+def get_ran_dates(num):
+    start_date = date(1995, 1, 1)
+    end_date = date(2022, 1, 1)
+    
+    time_between_dates = end_date - start_date
+    days_between_dates = time_between_dates.days    
+
+    return [str(start_date + timedelta(days=random.randrange(days_between_dates))) for _ in range(num)]
+
+def get_ran_avg_prices(num):
+    return [random.uniform(0,100000) for _ in range(num)]
+
+
+def dummy_sparql(postcodes, amounts, dates):
+    """
+    dummy_sparql creates a mock output from get_prices() in app.py
+
+    :param postcodes: list of strings representing postcodes
+    :param amounts: list of strings representing sale prices
+    :param dates: list of dates in form 'YYYY-__-__'
+    :return: dict as in get_prices() in app.py
+    """ 
+
+    bindings = []
+    for p, a, d in zip(postcodes, amounts, dates):
+        bindings.append(
+            {
+                "postcode" : {
+                    "value" : p
+                },
+                "amount" : {
+                    "value" : a
+                },
+                "date" : {
+                    "value" : d
+                }        
+            }
+        )
+    return {"results" : {
+            "bindings" : bindings
+            }
+        }
+
+
+def dummy_postcodes(postcodes, lats, longs):
+    """
+    dummy_postcodes creates a mock output from get_postcodes() in app.py
+
+    :param postcodes: list of strings representing postcodes
+    :param lats: list of floats representing latitudes
+    :param longs: list of floats representing longitudes
+    :return: dict as in get_postcodes() in app.py
+    """ 
+
+    dummy = Mock(spec=Response)
+    dummy.status_code = 200
+
+    values = []
+    pc_list = []
+    for p, lat, long in zip(postcodes, lats, longs):
+        pc_list.append(p)
+        values.append({"postcode" : p, "latitude": lat, "longitude": long })
+
+    dummy.json.return_value = {"result" : values}
+
+    return {"list": pc_list, "data": dummy}
+
+
+def expected_output(postcodes, lats, longs, avg_prices):
+    """
+    expected_output creates output in same form as format_all_prices() in app.py
+
+    :param postcodes: list of strings representing postcodes
+    :param lats: list of floats representing latitudes
+    :param longs: list of floats representing longitudes
+    :param avg_prices: list of floats representing avg prices
+    :return: dict as in get_postcodes() in app.py
+    """ 
+
+    res = {}
+
+    for pc, lat, long, ap in zip(postcodes, lats, longs, avg_prices):
+        res[pc] = { "lat": lat, "long": long, "avg_price": ap}
+    
+    return res
+
+
+def get_tests_attach_long_lat_to_prices():
+    # Partition on input length
+    
+    random.seed(3)
+
+    tests = []  
+
+    ## Empty input
+    data_in = expected_output([], [], [], [])
+    postcodes = dummy_postcodes([], [], [])
+    data_out = expected_output([], [], [], [])
+    tests.append((postcodes['data'].json()['result'], data_in, data_out))
+    
+    # Input length 1
+    input_length = 1
+    
+    pc_list = get_ran_pcs(input_length)
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+
+    avg_prices = [-1]*input_length # Irrelevant for this test
+
+    data_in = expected_output(pc_list, [0]*input_length, [0]*input_length, avg_prices)
+    postcodes = dummy_postcodes(pc_list, lats, longs)
+    data_out = expected_output(pc_list, lats, longs, avg_prices)
+    
+    tests.append((postcodes['data'].json()['result'], data_in, data_out))
+
+    # Input length > 1
+    input_length = 100    
+    pc_list = get_ran_pcs(input_length)
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+
+    avg_prices = [-1]*input_length # Irrelevant for this test
+
+    data_in = expected_output(pc_list, [0]*input_length, [0]*input_length, avg_prices)
+    postcodes = dummy_postcodes(pc_list, lats, longs)
+    data_out = expected_output(pc_list, lats, longs, avg_prices)
+    
+    tests.append((postcodes['data'].json()['result'], data_in, data_out))
+
+    return tests
+   
+    
+@pytest.mark.parametrize("postcodes,data,expected", get_tests_attach_long_lat_to_prices())
+def test_attach_long_lat_to_prices(postcodes, data, expected):
+    res = attach_long_lat_to_prices(postcodes, data)
+    assert res == expected
+
+
+def get_tests_format_all_prices():
+    # Partition on input length and missing data/no missing data
+    
+    random.seed(3)
+
+    tests = []  
+
+    ## Empty input
+    price_data = dummy_sparql([], [], [])
+    pc_data = dummy_postcodes([], [], [])["data"]
+    expected = expected_output([], [], [], [])
+    tests.append((pc_data, price_data, expected))
+
+    ## Input length = 1 and no missing data
+    input_length = 1
+    pc_list = ['BN1 9RU']
+    lats = get_ran_lats(input_length)
+    longs = get_ran_longs(input_length)
+    prices = ['10']
+    dates = get_ran_dates(input_length)
+    avg_prices = [10]
+
+    price_data = dummy_sparql(pc_list, prices, dates)
+    pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
+    expected = expected_output(pc_list, lats, longs, avg_prices)
+    tests.append((pc_data, price_data, expected))
+
+    return tests
+
+@pytest.mark.parametrize("postcodes,price_data,expected", get_tests_format_all_prices())
+def test_format_all_prices(postcodes, price_data, expected):
+    res = format_all_prices(postcodes, price_data)
+    assert res == expected
+
+
+
