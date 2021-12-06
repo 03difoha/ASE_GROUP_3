@@ -12,7 +12,9 @@ class coordinatesToPostcodes:
         
         self._sorted_by_lat = sorted(data, key = lambda x: x[1])
 
-    def get_postcodes_in_square(self, box):
+    def get_postcodes(self, lat, long, sqkm):
+
+        box = self._get_bounding_box(lat, long, sqkm)
         topleft_lat = box['tl']['latitude']
         topleft_long = box['tl']['longitude']
         bottomleft_lat = box['bl']['latitude']
@@ -71,3 +73,34 @@ class coordinatesToPostcodes:
             return len(self.l)
         def __getitem__(self, index):
             return self.key(self.l[index])
+
+
+
+    def _get_bounding_box(self, lat, long, sqkm):
+        
+        # 10001.965729km = 90 degrees
+        # 1km = 90/10001.965729 degrees = 0.0089982311916 degrees
+        # 5km = 0.04499115596 degrees, -> approx 0.045 degrees
+        # 0.045 / 2 = 0.0225 -> half the width of our box either side of our marker
+        unit = (0.0089982311916 * sqkm) / 2
+
+        tl = {
+            'latitude': lat + unit,
+            'longitude': long - unit
+        }
+        tr = {
+            'latitude': lat + unit,
+            'longitude': long + unit
+        }
+        bl = {
+            'latitude': lat - unit,
+            'longitude': long - unit
+        }
+        br = {
+            'latitude': lat - unit,
+            'longitude': long + unit
+        }
+
+        return {'tl': tl, 'tr': tr, 'bl': bl, 'br': br}
+
+        
