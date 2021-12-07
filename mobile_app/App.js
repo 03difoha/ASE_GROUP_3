@@ -245,7 +245,7 @@ async function update_hm_points() {
 
       console.log('sending lat long ##################### does send even run? : ', lat, long)
 
-      fetch("http://0d6b-35-231-75-52.ngrok.io/", {   //"https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
+      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
         method: "POST", // or 'PUT'
         headers: {
           "Content-Type": "application/json",
@@ -344,7 +344,6 @@ async function update_hm_points() {
         <Button
         title = 'update'
         onPress = {() => update_hm_points()} />
-
       </View>
 
       <BackButton />
