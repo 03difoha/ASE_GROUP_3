@@ -73,6 +73,7 @@ export default function App() {
     setLocation(location);
 
     console.log('curr lat long (from Location): ', location)
+    //setHM_Points([{'latitude' : 51.5072178, 'longitude' : -0.12758619999999998 , 'weight' : 1}, {'latitude' : 51.5072176, 'longitude' : -0.12758612 , 'weight' : 1}])
  
     }
 
@@ -113,9 +114,9 @@ async function update_hm_points() {
       let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
 
       //console.log('After Mapping: ', clean_hm_points);
-      
+      //let clean_hm_points = [{'latitude' : 51.5072178, 'longitutde' : -0.12758619999999998 , 'weight' : 1}]
       setHM_Points(clean_hm_points);
-
+      
       console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
       }
    
@@ -125,7 +126,7 @@ async function update_hm_points() {
 
       console.log('sending lat long ##################### does send even run? : ', lat, long)
 
-      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
+      fetch("http://0d6b-35-231-75-52.ngrok.io/", {   //"https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
         method: "POST", // or 'PUT'
         headers: {
           "Content-Type": "application/json",
@@ -159,10 +160,74 @@ async function update_hm_points() {
   }
 
 
+  async function update_hm_points_click(e) {
+
+
+    
+    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
+
+      if (dirty_hm_points['message'] != "Internal Server Error") {
+
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
+
+      //console.log('After Mapping: ', clean_hm_points);
+      //let clean_hm_points = [{'latitude' : 51.5072178, 'longitutde' : -0.12758619999999998 , 'weight' : 1}]
+      setHM_Points(clean_hm_points);
+      
+      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
+      }
+   
+    }
+    
+    async function send_location(lat, long) {
+
+      console.log('sending lat long ##################### does send even run? : ', lat, long)
+
+      fetch("http://0d6b-35-231-75-52.ngrok.io/", {   //"https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ lat: lat, long: long }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          //console.log("Success:", data)
+          console.log('sending lat long ##################### just about 2 send : ', lat, long)
+          neaten_the_data_to_the_format_specified(data)
+          
+          //var dataa = data
+    
+          //return dataa
+    
+          
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          //return null
+        });
+    }
+
+
+    let lat_click = e.nativeEvent.coordinate["latitude"];
+    let long_click = e.nativeEvent.coordinate["longitude"];
+
+    console.log('sending lat long ##################### pre-sending : ', lat, long)
+
+    
+
+    
+    send_location(lat_click, long_click);
+    
+  }
+
+
+
   function clickToMove(e) {console.log('click', latlongclick)
                           console.log(e.nativeEvent.coordinate["latitude"])
                           console.log(e.nativeEvent.coordinate["longitude"])
                            update_latlong_click(e)
+                           update_hm_points_click(e)
                            console.log('click', lat, long)};
 
   function MainApp() {
