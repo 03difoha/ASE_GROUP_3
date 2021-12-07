@@ -65,12 +65,7 @@ export default function App() {
 
   async function update_latlong_loc() {
  
-
-    let location = await Location.getCurrentPositionAsync({});
-
-    setLat(location.coords.latitude);
-    setLong(location.coords.longitude);
-    setLocation(location);
+    update_hm_points()
 
     console.log('curr lat long (from Location): ', location)
     //setHM_Points([{'latitude' : 51.5072178, 'longitude' : -0.12758619999999998 , 'weight' : 1}, {'latitude' : 51.5072176, 'longitude' : -0.12758612 , 'weight' : 1}])
@@ -80,10 +75,9 @@ export default function App() {
   
   async function update_latlong_post() {
 
-    let postcode_location = await Location.geocodeAsync(postCodeInput);
-
-    setLat(postcode_location[0]['latitude']);
-    setLong(postcode_location[0]['longitude']);
+    
+    update_hm_points_post()
+    
 
     console.log('curr lat long (from postcode): ', lat, long)
     
@@ -153,9 +147,16 @@ async function update_hm_points() {
 
 
     console.log('sending lat long ##################### pre-sending : ', lat, long)
+    let location = await Location.getCurrentPositionAsync({});
 
+    setLat(location.coords.latitude);
+    setLong(location.coords.longitude);
+    setLocation(location);
+
+    let lat_loc = location.coords.latitude
+    let long_loc = location.coords.longitude
     
-    send_location(lat, long);
+    send_location(lat_loc, long_loc);
     
   }
 
@@ -218,6 +219,69 @@ async function update_hm_points() {
 
     
     send_location(lat_click, long_click);
+    
+  }
+
+  async function update_hm_points_post() {
+
+
+    
+    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
+
+      if (dirty_hm_points['message'] != "Internal Server Error") {
+
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
+
+      //console.log('After Mapping: ', clean_hm_points);
+      //let clean_hm_points = [{'latitude' : 51.5072178, 'longitutde' : -0.12758619999999998 , 'weight' : 1}]
+      setHM_Points(clean_hm_points);
+      
+      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
+      }
+   
+    }
+    
+    async function send_location(lat, long) {
+
+      console.log('sending lat long ##################### does send even run? : ', lat, long)
+
+      fetch("http://0d6b-35-231-75-52.ngrok.io/", {   //"https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ lat: lat, long: long }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          //console.log("Success:", data)
+          console.log('sending lat long ##################### just about 2 send : ', lat, long)
+          neaten_the_data_to_the_format_specified(data)
+          
+          //var dataa = data
+    
+          //return dataa
+    
+          
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          //return null
+        });
+    }
+
+
+
+    let postcode_location = await Location.geocodeAsync(postCodeInput);
+
+    setLat(postcode_location[0]['latitude']);
+    setLong(postcode_location[0]['longitude']);
+
+    let lat_post = postcode_location[0]['latitude']
+    let long_post = postcode_location[0]['longitude']
+
+    
+    send_location(lat_post, long_post);
     
   }
 
