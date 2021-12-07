@@ -45,94 +45,79 @@ export default function App() {
   var [postCodeInput, setPostCodeInput] = useState("");
   var tempInput = ''
 
-  //export { setHM_Points };
-
-  /*
-  const hm_points = [
-    { latitude: lat, longitude: long, weight: 1 },
-    { latitude: lat + 0.0001, longitude: long + 0.0001, weight: 1 },
-    { latitude: lat - 0.0001, longitude: long - 0.0001, weight: 1 },
-    { latitude: lat - 0.0001, longitude: long + 0.0001, weight: 1 },
-    { latitude: lat + 0.0001, longitude: long - 0.0001, weight: 1 },
-    { latitude: lat, longitude: long + 0.00015, weight: 1 },
-    { latitude: lat, longitude: long - 0.00015, weight: 1 },
-  ]; */
-
   const ref = useRef(null);
 
-  async function update() {
+  useEffect(() => {
+    (async () => {
+      const isInternetReachable = await Network.getNetworkStateAsync();
+      if (!isInternetReachable) {
+        setErrorMsg("Check internet connection and restart app");
+        return;
+      }
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
 
-    console.log()
-    console.log('Flags: ')
-    console.log()
-    console.log('Location: ', location_flag)
-    console.log('postcode: ', postcode_flag)
-    console.log('Click: ', click_flag)
+    })();
+  }, []);  
 
-    if (location_flag == true) {
+  async function update_latlong_loc() {
+ 
 
     let location = await Location.getCurrentPositionAsync({});
+
     setLat(location.coords.latitude);
     setLong(location.coords.longitude);
+    setLocation(location);
 
     console.log('curr lat long (from Location): ', location)
-    setLocation(location);
+ 
     }
 
-    if (postcode_flag == true) {
+  
+  async function update_latlong_post() {
 
-      let postcode_location = await Location.geocodeAsync(postCodeInput);
-      console.log('postcodeinput', postCodeInput)
-      console.log('man_loc', postcode_location)
+    let postcode_location = await Location.geocodeAsync(postCodeInput);
 
-      console.log('man_lat: ', postcode_location[0]['latitude'])
+    setLat(postcode_location[0]['latitude']);
+    setLong(postcode_location[0]['longitude']);
 
-      setLat(postcode_location[0]['latitude']);
-      setLong(postcode_location[0]['longitude']);
-
-      console.log('curr lat long (from postcode): ', lat, long)
+    console.log('curr lat long (from postcode): ', lat, long)
+    
     }
 
-    if (click_flag == true) {
 
-      console.log ('curr lat long (from click) double checking if latlongclick exists: ', latlongclick)
-      console.log()
-      console.log('more double checking of latlong: ', latlongclick[0]["latitude"], latlongclick[0]["longitude"])
-      setLat(latlongclick[0]["latitude"]);
-      setLong(latlongclick[0]["longitude"]);
+  async function update_latlong_click() {
 
-      console.log('curr lat long (from click): ', lat, long)
 
-      //setLocation(location);
-      }
-    
-   
-    // setMarkers(get_bounding_box(lat, long));
-    
+    setLat(latlongclick[0]["latitude"]);
+    setLong(latlongclick[0]["longitude"]);
 
-    // Yeah soz, I am aware that send location was neatly off in utilities, Hook calls were messing up trying to get betwen the files so I've just moved it here to minimise addtional faff.
-    
+    console.log('curr lat long (from click): ', lat, long)
+
+     }
+
+
+
+async function update_hm_points() {
+
+
     
     function neaten_the_data_to_the_format_specified(dirty_hm_points) {
-      
-      //console.log(Object.entries(hm_points)[1][1]['avg_price'])
-
-      //console.log('Before Mapping: ', Object.values(dirty_hm_points))
-
-      //console.log('Before Mapping: ', dirty_hm_points['message'] == "Internal Server Error")
 
       if (dirty_hm_points['message'] != "Internal Server Error") {
 
       let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));   //([key, value]) => {lat : {value.lat} long : {value.long} weight : {value.avg_price}})
 
-      console.log('After Mapping: ', clean_hm_points);
+      //console.log('After Mapping: ', clean_hm_points);
       
       setHM_Points(clean_hm_points);
 
       console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
       }
-      //console.log('After Setting: ', hm_points);
-
+   
     }
     
     async function send_location(lat, long) {
@@ -170,36 +155,12 @@ export default function App() {
     
     send_location(lat, long);
     
-
-    //console.log('hm_points_DAta: ', data);
-
-    //console.log('hm_points_Set: ', hm_points);
   }
 
 
-  useEffect(() => {
-    (async () => {
-      const isInternetReachable = await Network.getNetworkStateAsync();
-      if (!isInternetReachable) {
-        setErrorMsg("Check internet connection and restart app");
-        return;
-      }
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setErrorMsg("Permission to access location was denied");
-        return;
-      }
-
-      update();
-    })();
-
-    // const interval = setInterval(() => update(), 10000);
-    // return () => {
-    //   clearInterval(interval);
-    // };
-    // update();
-  }, []);
-
+  function clickToMove(e) {setLatLongClick([e.nativeEvent.coordinate]), 
+                           console.log('click', latlongclick),
+                           update_latlong_click()};
 
   function MainApp() {
     return <View style={styles.container}>
@@ -212,8 +173,7 @@ export default function App() {
           longitudeDelta: 0.05,
         }}
 
-        onPress={(e) =>  {setLatLongClick([e.nativeEvent.coordinate]), 
-                         console.log('click', latlongclick)}} // latitude: lat, longitude: long})}
+        onPress={(e) =>  {clickToMove(e)}} // latitude: lat, longitude: long})}
 
       >
 
@@ -241,7 +201,6 @@ export default function App() {
         ))}  
       </MapView>
 
-      <PostCode_Keyboard />
 
       <Text style={styles.paragraph}>{errorMsg}</Text>
           
@@ -251,129 +210,61 @@ export default function App() {
       paddingBottom = {15}
       //width = {200}
       >
-      <ClickModeButton />
 
-      <PostCodeButton_InMain />
-      
-      </View>
+        <Button
+        title = 'update'
+        onPress = {() => update_hm_points()} />
+     
 
-      <View style={styles.buttonView}>
-
-      
-      <LocationModeButton />
         
-
-        <Text>
-
-          </Text>
-
-        <BackButton />
 
        
         
 
       </View>
+
+      <BackButton />
       
     </View>
   }
 
-  function Clickcheck() {
-    //console.log('clicked and this is prev app time: ', isAppTime)
-    setAppTime(true)
-    SetFlagsOnClick(3)
-    //console.log('And this is new app time: ', isAppTime)
-  }
+  function enter() {setAppTime(true), console.log('hello>?'), update_latlong_loc()}
+
   
   function EnterButton(props) {
     return (
   
-  
       <Button 
       title = 'Use my location'
-      onPress =  {() => Clickcheck()} >
+      onPress =  {() => enter()} >
        
     </Button>
          
     );
   }
 
-  function BackClickcheck() {
-    //console.log('clicked and this is prev app time: ', isAppTime)
-    setAppTime(false)
-    //console.log('And this is new app time: ', isAppTime)
-  }
-  
   function BackButton(props) {
     return (
   
-  
       <Button 
       title = 'Back Now'
-      onPress =  {() => BackClickcheck()} >
+      onPress =  {() => setAppTime(false)} >
        
     </Button>
          
     );
   }
-  /*
-  function post2lat(text) {
-    //let local = await Location.geocodeAsync(text)
-
-    let location = await Location.geocodeAsync('baker street london');
-    local.then( result => {
-
-      console.log('hello hello post code time:', result)
-      this.setState({name: result});
-     }, function(error) {
-      this.setState({name: error});
-     });
-
-     console.log('hello hello post code time:', result)
-
-  } */
-
   function PostClickcheck(text) {
-    
-    // console.log('The post code1: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
-    
+        
     setPostCodeInput(text)
 
     postCodeInput = text
-    
-    setPostCodeMode(true)
-
-    console.log('in clickcheck - poscodemode?: ', postCodeMode)
-
-    console.log('and the input:   ', postCodeInput)
-
-    
-    //post2lat(postCodeInput)
-    
-    // console.log('The post code2: ', postCodeInput, 'and the temp: ', text, ' ', tempInput)
-
+   
     Keyboard.dismiss()
 
     setAppTime(true)
 
-    SetFlagsOnClick(2)
-
-    //Geocoder.geocodepostcode('New York').then(res => {})
-      // res is an Array of geocoding object (see below)
-  /*
-  console.log(Location.geocodeAsync('BN2 3QA'))
-
-
-  Geocode.frompostcode("Eiffel Tower").then(
-    (response) => {
-      const { lat, lng } = response.results[0].geometry.location;
-      console.log(lat, lng);
-    },
-    (error) => {
-      console.error(error);
-    }
-  );  */
-
-  
+    update_latlong_post()
 
   }
 
@@ -396,190 +287,6 @@ export default function App() {
   }
 
 
-  function SetFlagsOnClick(n) {
-
-    if (n == 1) {
-        setLocation_Flag(false);
-        setPostCode_Flag(false);
-        setClick_Flag(true);
-      }
-      else if (n == 2) {
-        setLocation_Flag(false);
-        setPostCode_Flag(true);
-        setClick_Flag(false);
-      }
-      else if (n == 3) {
-        setLocation_Flag(true);
-        setPostCode_Flag(false);
-        setClick_Flag(false);
-      }
-
-      update()
-
-    }
-
-  
-
-  function ClickModeButton(props) {
-    return (
-
-      <View flex = {1}
-      
-      alignItems = 'flex-start'
-      justifyContent= 'center'
-      width = {50}>
-
-
-
-      {click_flag ? (
-
-        <Button 
-            
-        color = "green"
-        width = {50}
-        height = {50}
-        title = 'Click View Mode'
-
-        onPress = {() => {update(), console.log('we clicked')}}
-
-        />
-
-      ) : (
-
-        <Button
-    
-        color = "red"
-        width = {50}
-        height = {50}
-        title = 'Click View Mode'
-
-        onPress = {() => {SetFlagsOnClick(1)}}
- 
-        />
-      )}
-
-      </ View>
-
-    );
-  }
-
-  function OnSubmit() {PostClickcheck(tempInput)
-                       setPostCode_KeyboardFocus_Flag(false)
-                       update()
-  }
-
-  function PostCode_Keyboard() {
-    return(
-
-      postcode_keyboardfocus_flag ? (
-
-        <TextInput  style={styles.text_input} 
-
-        autoFocus
-        
-
-            onChangeText = {(text) => setTempin(text)}
-              
-            onSubmitEditing = {() => OnSubmit()}  
-                                   
-            >
-               </TextInput> ) : (null)
-               
-               ) 
-              
-              }
-    
-  
-
-  function PostCodeButton_InMain(props) {
-    return (
-
-      
-      <View 
-      
-      flex = {1}
-      
-      alignItems = 'flex-end'
-      justifyContent= 'center'
-      width = {55} >
-
-
-
-      {postcode_flag ? (
-
-        <Button 
-            
-        color = "green"
-        width = {50}
-        height = {50}
-        title = 'Post Code Mode'
-
-        onPress = {() => {update(), console.log('we clicked')}}
-
-        />
-
-      ) : (
-
-        <Button 
-    
-        color = "red"
-        width = {50}
-        height = {50}
-        title = 'Post Code Mode'
-
-        onPress = {() => {SetFlagsOnClick(2),
-                          setPostCode_KeyboardFocus_Flag(true)}}
-
-        //onClick = {() => setPostCode_Flag(true)}
-
-        //onClick = 
-        />
-      )}
-
-      </ View>
-    
-
-    );
-  }
-
-
-  function LocationModeButton(props) {
-    return (  
-
-      
-      location_flag ? (
-
-        <Button 
-            
-        color = "green"
-        width = {50}
-        height = {50}
-        title = 'Current Location'
-
-        onPress = {() => {update(), console.log('we clicked')}}
-        
-
-        />
-
-        
-
-      ) : (
-
-        <Button 
-    
-        color = "red"
-        width = {50}
-        height = {50}
-        title = 'Current Location'
-
-        onPress = {() => {SetFlagsOnClick(3)}}
-        />
-      )
-      
-      ); 
-  
-  }
-  
   function IntroPage() {
   
     return <View style={[styles.text_stuff, styles.container]}>
