@@ -89,11 +89,12 @@ export default function App() {
     }
 
 
-  async function update_latlong_click() {
+  async function update_latlong_click(e) {
 
+    console.log('heyehgeyhyey', '', e.nativeEvent.coordinate["latitude"])
 
-    setLat(latlongclick[0]["latitude"]);
-    setLong(latlongclick[0]["longitude"]);
+    setLat(e.nativeEvent.coordinate["latitude"]);
+    setLong(e.nativeEvent.coordinate["longitude"]);
 
     console.log('curr lat long (from click): ', lat, long)
 
@@ -158,9 +159,11 @@ async function update_hm_points() {
   }
 
 
-  function clickToMove(e) {setLatLongClick([e.nativeEvent.coordinate]), 
-                           console.log('click', latlongclick),
-                           update_latlong_click()};
+  function clickToMove(e) {console.log('click', latlongclick)
+                          console.log(e.nativeEvent.coordinate["latitude"])
+                          console.log(e.nativeEvent.coordinate["longitude"])
+                           update_latlong_click(e)
+                           console.log('click', lat, long)};
 
   function MainApp() {
     return <View style={styles.container}>
@@ -177,9 +180,7 @@ async function update_hm_points() {
 
       >
 
-        {console.log('hm points: ', hm_points)}
-        {console.log('colicicicikckcick', latlongclick)}
-        {console.log('curr lat long (at heatmap activation): ', lat, long)}
+      
         <MapView.Heatmap
           points={hm_points}
           opacity={0.6}
