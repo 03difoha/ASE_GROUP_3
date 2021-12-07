@@ -214,12 +214,6 @@ async function update_hm_points() {
         <Button
         title = 'update'
         onPress = {() => update_hm_points()} />
-     
-
-        
-
-       
-        
 
       </View>
 
