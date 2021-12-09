@@ -114,7 +114,7 @@ def expected_output(postcodes, lats, longs, avg_prices):
     
     return res
 
-def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per_pc):
+def expected_output_by_year(postcodes, lats, longs, avg_prices, num_sales, years, years_per_pc):
     """
     expected_output creates output in same form as format_prices_by_year() in app.py to be used as expected test output
 
@@ -122,6 +122,7 @@ def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per
     :param lats: list of floats representing latitudes
     :param longs: list of floats representing longitudes
     :param avg_prices: list of floats representing avg prices
+    :param num_sales: list of integers representing total number of sales in a certain pc in a certain year
     :param years: list of strings representing years or dates in form YYYY-__-__
     :param years_per_pc: list of integers representing #years there is data for for each pc
     :return: dict as in get_postcodes() in app.py
@@ -131,12 +132,13 @@ def expected_output_by_year(postcodes, lats, longs, avg_prices, years, years_per
     idx = 0
     for pc, lat, long, ys in zip(postcodes, lats, longs, years_per_pc):
         res[pc] = { "lat": lat, "long": long, "years": {}}
-        ap_list = []
-        for ap, y in zip(avg_prices[idx:idx+ys], years[idx:idx+ys]):
-            if y[0:4] not in res[pc]['years']:
-                res[pc]['years'][y[0:4]] = [ap]
-            else:
-                res[pc]['years'][y[0:4]].append(ap)
+        # for each postcode the years
+        for ap, ns, y in zip(avg_prices[idx:idx+ys], num_sales[idx:idx+ys], years[idx:idx+ys]):
+            res[pc]['years'][y[0:4]] = {
+                'avg' : ap,
+                'num_sales' : ns
+            }
+                           
             idx = idx+1
         
 
@@ -282,7 +284,7 @@ def get_tests_format_prices_by_year():
     ## Empty input
     price_data = dummy_sparql([], [], [])
     pc_data = dummy_postcodes([], [], [])["data"]
-    expected = expected_output_by_year([], [], [], [], [], [])
+    expected = expected_output_by_year([], [], [], [], [], [], [])
     tests.append((pc_data, price_data, expected))
 
     # input length 1, n, y, y
@@ -293,10 +295,11 @@ def get_tests_format_prices_by_year():
     prices = ['10']
     dates = get_ran_dates(input_length)
     avg_prices = [10]
+    num_sales = [1]
 
     price_data = dummy_sparql(pc_list, prices, dates)
     pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
-    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, [1])
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, num_sales, dates, [1])
     tests.append((pc_data, price_data, expected))
 
     # input length >1 y, y, y
@@ -312,10 +315,11 @@ def get_tests_format_prices_by_year():
     years_per_pc = [1, 1]
     prices = ['10', '5']
     avg_prices = [10, 5]
+    num_sales = [1, 1]
 
     price_data = dummy_sparql(pc_list_prices, prices, dates)
     pc_data = dummy_postcodes(pc_list, lats_in, longs_in)["data"]
-    expected = expected_output_by_year(pc_list_prices, lats_out, longs_out, avg_prices, dates, years_per_pc)
+    expected = expected_output_by_year(pc_list_prices, lats_out, longs_out, avg_prices, num_sales, dates, years_per_pc)
     tests.append((pc_data, price_data, expected))
 
     # input length >1, n, n, y
@@ -331,10 +335,11 @@ def get_tests_format_prices_by_year():
     dates = ['2010', '2011', '2012', '2013', '2014', '2015']
     years_per_pc = [3, 2, 1]
     avg_prices = [10, 5, 3, 20, 10, 99]
+    num_sales = [1, 1, 1, 1, 1, 1]
 
     price_data = dummy_sparql(pc_list_prices, prices, dates)
     pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
-    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, years_per_pc)
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, num_sales, dates, years_per_pc)
     tests.append((pc_data, price_data, expected))
 
     # input length >1, n, n, n
@@ -348,12 +353,14 @@ def get_tests_format_prices_by_year():
     dates = get_ran_dates(input_length)
     prices = ['10', '5', '3', '20', '10', '99']
     dates = ['2010', '2010', '2010', '2013', '2014', '2015']
-    years_per_pc = [3, 2, 1]
-    avg_prices = [10, 5, 3, 20, 10, 99]
+    dates_unique = ['2010', '2013', '2014', '2015']
+    years_per_pc = [1, 2, 1]
+    avg_prices = [6, 20, 10, 99]
+    num_sales = [3, 1, 1, 1]
 
     price_data = dummy_sparql(pc_list_prices, prices, dates)
     pc_data = dummy_postcodes(pc_list, lats, longs)["data"]
-    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, dates, years_per_pc)
+    expected = expected_output_by_year(pc_list, lats, longs, avg_prices, num_sales, dates_unique, years_per_pc)
     tests.append((pc_data, price_data, expected))
 
     return tests

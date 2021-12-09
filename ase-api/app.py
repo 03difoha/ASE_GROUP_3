@@ -62,12 +62,18 @@ def format_prices_by_year(postcodes, price_data):
         
         # if a record for this postcode exists, but not for this year then create an array with the current sale value in
         if p['date']['value'][0:4] not in res[p["postcode"]["value"]]['years']:
-            res[p["postcode"]["value"]]['years'][p['date']
-                                                    ['value'][0:4]] = [int(p['amount']['value'])]
+            res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]] = {
+                'avg' : int(p['amount']['value']),
+                'num_sales' : 1
+            }
         else:
-            # if we do have a record for this year already then append the current sale value onto the year array
-            res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]].append(
-                int(p['amount']['value']))
+            # if we do have a record for this year already update the average and increment number of sales by one
+            curr_avg = res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]]['avg']
+            curr_num_sales = res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]]['num_sales']
+            new_num_sales = curr_num_sales + 1
+            new_avg = (curr_avg*curr_num_sales + int(p['amount']['value'])) / new_num_sales
+            res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]]['avg'] = new_avg
+            res[p["postcode"]["value"]]['years'][p['date']['value'][0:4]]['num_sales'] = new_num_sales
 
     res = attach_long_lat_to_prices(postcodes.json()['result'], res)
     return res
