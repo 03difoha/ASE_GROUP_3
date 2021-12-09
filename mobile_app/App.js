@@ -54,6 +54,35 @@ export default function App() {
     })();
   }, []);  
 
+
+  function neaten_the_data_to_the_format_specified(dirty_hm_points) {
+      if (dirty_hm_points['message'] != "Internal Server Error") {
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));
+      setHM_Points(clean_hm_points);
+      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
+      }
+    }
+    
+    async function send_location(lat, long) {
+      console.log('sending lat long ##################### does send even run? : ', lat, long)
+      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ lat: lat, long: long }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          //console.log("Success:", data)
+          console.log('sending lat long ##################### just about 2 send : ', lat, long)
+          neaten_the_data_to_the_format_specified(data)
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+
   async function update_latlong_loc() {
     update_hm_points()
     console.log('curr lat long (from Location): ', location)
@@ -72,34 +101,6 @@ export default function App() {
     }
 
 async function update_hm_points() {
-    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
-      if (dirty_hm_points['message'] != "Internal Server Error") {
-      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));
-      setHM_Points(clean_hm_points);
-      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
-      }
-    }
-
-    async function send_location(lat, long) {
-      console.log('sending lat long ##################### does send even run? : ', lat, long)
-      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
-        method: "POST", // or 'PUT'
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ lat: lat, long: long }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          //console.log("Success:", data)
-          console.log('sending lat long ##################### just about 2 send : ', lat, long)
-          neaten_the_data_to_the_format_specified(data)
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    }
-
     console.log('sending lat long ##################### pre-sending : ', lat, long)
     let location = await Location.getCurrentPositionAsync({});
     setLat(location.coords.latitude);
@@ -111,33 +112,6 @@ async function update_hm_points() {
   }
 
   async function update_hm_points_click(e) {
-    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
-      if (dirty_hm_points['message'] != "Internal Server Error") {
-      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));
-      setHM_Points(clean_hm_points);
-      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
-      }
-    }
-    
-    async function send_location(lat, long) {
-      console.log('sending lat long ##################### does send even run? : ', lat, long)
-      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
-        method: "POST", // or 'PUT'
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ lat: lat, long: long }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          //console.log("Success:", data)
-          console.log('sending lat long ##################### just about 2 send : ', lat, long)
-          neaten_the_data_to_the_format_specified(data)
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    }
     let lat_click = e.nativeEvent.coordinate["latitude"];
     let long_click = e.nativeEvent.coordinate["longitude"];
     console.log('sending lat long ##################### pre-sending : ', lat, long)
@@ -145,36 +119,6 @@ async function update_hm_points() {
   }
 
   async function update_hm_points_post() {
-    function neaten_the_data_to_the_format_specified(dirty_hm_points) {
-      if (dirty_hm_points['message'] != "Internal Server Error") {
-      let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({'latitude' : Object.values(i)[0], 'longitude' : Object.values(i)[1], 'weight' : Object.values(i)[2]}));
-      setHM_Points(clean_hm_points);
-      console.log('sending lat long ##################### Succesffuly sent : ', lat, long)
-      }
-    }
-    
-    async function send_location(lat, long) {
-      console.log('sending lat long ##################### does send even run? : ', lat, long)
-      fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {   
-        method: "POST", // or 'PUT'
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ lat: lat, long: long }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          //console.log("Success:", data)
-          console.log('sending lat long ##################### just about 2 send : ', lat, long)
-          neaten_the_data_to_the_format_specified(data)
-
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          //return null
-        });
-    }
-    
     let postcode_location = await Location.geocodeAsync(postCodeInput);
     setLat(postcode_location[0]['latitude']);
     setLong(postcode_location[0]['longitude']);
