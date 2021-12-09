@@ -18,7 +18,6 @@ import {
 } from "react-native";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
-
 import { get_bounding_box } from "./utilities";
 
 export default function App() {
@@ -52,7 +51,6 @@ export default function App() {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-
     })();
   }, []);  
 
@@ -71,7 +69,7 @@ export default function App() {
     setLat(e.nativeEvent.coordinate["latitude"]);
     setLong(e.nativeEvent.coordinate["longitude"]);
     console.log('curr lat long (from click): ', lat, long)
-     }
+    }
 
 async function update_hm_points() {
     function neaten_the_data_to_the_format_specified(dirty_hm_points) {
@@ -99,7 +97,6 @@ async function update_hm_points() {
         })
         .catch((error) => {
           console.error("Error:", error);
-
         });
     }
 
@@ -145,7 +142,6 @@ async function update_hm_points() {
     let long_click = e.nativeEvent.coordinate["longitude"];
     console.log('sending lat long ##################### pre-sending : ', lat, long)
     send_location(lat_click, long_click);
-    
   }
 
   async function update_hm_points_post() {
@@ -184,7 +180,6 @@ async function update_hm_points() {
     let lat_post = postcode_location[0]['latitude']
     let long_post = postcode_location[0]['longitude']
     send_location(lat_post, long_post);
-    
   }
 
   function clickToMove(e) {console.log('click', latlongclick)
@@ -306,7 +301,6 @@ async function update_hm_points() {
   return (    
     <Greeting isAppTime = {isAppTime} />
     );
-
 }
 
 const styles = StyleSheet.create({
@@ -358,5 +352,4 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 5
   }
-
 });
