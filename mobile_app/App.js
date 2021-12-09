@@ -174,6 +174,7 @@ async function update_hm_points() {
           //return null
         });
     }
+    
     let postcode_location = await Location.geocodeAsync(postCodeInput);
     setLat(postcode_location[0]['latitude']);
     setLong(postcode_location[0]['longitude']);
@@ -287,7 +288,6 @@ async function update_hm_points() {
                     onSubmitEditing = {() => PostClickcheck(tempInput)}  >
        </TextInput>
        </View>
-  
   }
   
   function Greeting(props) {
