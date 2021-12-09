@@ -23,8 +23,7 @@ export default function App() {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [isAppTime, setAppTime] = useState(false);
-  var [postCodeInput, setPostCodeInput] = useState("");
-  var tempInput = "";
+  const [postCodeInput, setPostCodeInput] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -51,7 +50,7 @@ export default function App() {
     })
       .then((response) => response.json())
       .then((data) => {
-        neaten_the_data_to_the_format_specified(data);
+        format_price_data(data);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -59,7 +58,7 @@ export default function App() {
       });
   }
 
-  function neaten_the_data_to_the_format_specified(dirty_hm_points) {
+  function format_price_data(dirty_hm_points) {
     if (dirty_hm_points["message"] != "Internal Server Error") {
       let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({
         latitude: Object.values(i)[0],
@@ -70,21 +69,19 @@ export default function App() {
     }
   }
 
-  async function update_latlong_loc() {
-    update_hm_points();
-  }
-
-  async function update_latlong_post() {
-    update_hm_points_post();
-  }
-
   async function update_latlong_click(e) {
     setLat(e.nativeEvent.coordinate["latitude"]);
     setLong(e.nativeEvent.coordinate["longitude"]);
   }
 
+  function update_location(lat, long) {
+    setLat(lat);
+    setLong(long);
+  }
+
   async function update_hm_points() {
     let location = await Location.getCurrentPositionAsync({});
+    console.log(location);
     setLat(location.coords.latitude);
     setLong(location.coords.longitude);
     let lat_loc = location.coords.latitude;
@@ -101,6 +98,7 @@ export default function App() {
 
   async function update_hm_points_post() {
     let postcode_location = await Location.geocodeAsync(postCodeInput);
+    console.log(postcode_location);
     setLat(postcode_location[0]["latitude"]);
     setLong(postcode_location[0]["longitude"]);
     let lat_post = postcode_location[0]["latitude"];
@@ -153,35 +151,17 @@ export default function App() {
     );
   }
 
-  function enter() {
-    setAppTime(true), console.log("hello>?"), update_latlong_loc();
-  }
-  function EnterButton(props) {
-    return <Button title="Use my location" onPress={() => enter()}></Button>;
+  function loadMapFromLocation() {
+    setAppTime(true), console.log("hello>?"), update_hm_points();
   }
 
   function BackButton(props) {
     return <Button title="Back Now" onPress={() => setAppTime(false)}></Button>;
   }
-  function PostClickcheck(text) {
-    setPostCodeInput(text);
-    postCodeInput = text;
+  function loadMapFromPostcode(text) {
     Keyboard.dismiss();
     setAppTime(true);
-    update_latlong_post();
-  }
-
-  function PostCodeButton(props) {
-    return (
-      <Button
-        title="Enter A Postode"
-        onPress={() => PostClickcheck(tempInput)}
-      ></Button>
-    );
-  }
-
-  function setTempin(text) {
-    tempInput = text;
+    update_hm_points_post();
   }
 
   function IntroPage() {
@@ -192,14 +172,20 @@ export default function App() {
           enter a postcode?"
         </Text>
         <Text></Text>
-        <EnterButton />
+        <Button
+          title="Use my location"
+          onPress={() => loadMapFromLocation()}
+        ></Button>
         <Text></Text>
-        <PostCodeButton />
+        <Button
+          title="Enter A Postode"
+          onPress={() => loadMapFromPostcode(postCodeInput)}
+        ></Button>
         <Text></Text>
         <TextInput
           style={styles.text_input}
-          onChangeText={(text) => setTempin(text)}
-          onSubmitEditing={() => PostClickcheck(tempInput)}
+          onChangeText={(text) => setPostCodeInput(text)}
+          onSubmitEditing={() => loadMapFromPostcode(postCodeInput)}
         ></TextInput>
       </View>
     );
