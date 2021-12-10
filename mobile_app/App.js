@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import MapView from "react-native-maps";
 import * as Network from "expo-network";
 
+import Slider from '@react-native-community/slider'
+
 import {
   StyleSheet,
   Text,
@@ -10,6 +12,9 @@ import {
   TextInput,
   Keyboard,
 } from "react-native";
+
+
+
 
 import * as Location from "expo-location";
 // import { get_price_data } from "./utilities";
@@ -23,6 +28,9 @@ export default function App() {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [isAppTime, setAppTime] = useState(false);
+  const [isaddressflag, setAddressFlag] = useState(false);
+  const [isyear, setYear] = useState(2000);
+  const [filterbyyear, setFilterByYear] = useState(false)
   var [postCodeInput, setPostCodeInput] = useState("");
   var tempInput = "";
 
@@ -41,6 +49,8 @@ export default function App() {
     })();
   }, []);
 
+  
+  
   async function get_price_data(lat, long) {
     fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/", {
       method: "POST", // or 'PUT'
@@ -52,6 +62,7 @@ export default function App() {
       .then((response) => response.json())
       .then((data) => {
         neaten_the_data_to_the_format_specified(data);
+        //console.log(data);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -60,12 +71,82 @@ export default function App() {
   }
 
   function neaten_the_data_to_the_format_specified(dirty_hm_points) {
+    //console.log(dirty_hm_points)
     if (dirty_hm_points["message"] != "Internal Server Error") {
       let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({
         latitude: Object.values(i)[0],
         longitude: Object.values(i)[1],
         weight: Object.values(i)[2],
       }));
+      //console.log(clean_hm_points);
+      setHM_Points(clean_hm_points);
+    }
+  }
+  
+
+  async function get_price_data_years(lat, long) {
+    fetch("https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/pricesByYear", {
+      method: "POST", // or 'PUT'
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ lat: lat, long: long }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        neaten_the_data_to_the_format_specified_years(data);
+        //console.log(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        return null;
+      });
+  }
+
+
+
+  
+
+  function filter(e) {
+
+    //console.log('heree', e[2][isyear])
+
+    //console.log('heree', e)
+    //console.log('heree', e['years'])
+    //console.log('heree', e['years'][isyear])
+    //console.log(isyear)
+
+
+    //if (e['years'][isyear]['num_sales']) {delete e['years'][isyear]['num_sales']}
+
+    console.log(Object.values(e))
+    console.log(e)
+
+    if (e['years'][isyear]) {e['weight'] = e['years'][isyear]['avg']}
+     else {e['weight'] = 0}
+
+    delete e['years'];
+
+    console.log(Object.values(e))
+
+    let new_e = {latitude : Object.values(e)[0],
+                 longitude : Object.values(e)[1],
+                 weight : Object.values(e)[2]}
+
+    console.log('new_e', new_e)
+
+    return new_e
+
+    //console.log('here', e)
+  }
+
+  function neaten_the_data_to_the_format_specified_years(dirty_hm_points) {
+    //console.log(dirty_hm_points)
+    if (dirty_hm_points["message"] != "Internal Server Error") {
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) => (filter(i)));
+
+
+      console.log('cleans ##################', clean_hm_points)
       setHM_Points(clean_hm_points);
     }
   }
@@ -89,7 +170,9 @@ export default function App() {
     setLong(location.coords.longitude);
     let lat_loc = location.coords.latitude;
     let long_loc = location.coords.longitude;
+
     get_price_data(lat_loc, long_loc);
+    get_price_data_years(lat_loc, long_loc);
   }
 
   async function update_hm_points_click(e) {
@@ -97,6 +180,7 @@ export default function App() {
     let long_click = e.nativeEvent.coordinate["longitude"];
 
     get_price_data(lat_click, long_click);
+    get_price_data_years(lat_click, long_click);
   }
 
   async function update_hm_points_post() {
@@ -105,7 +189,17 @@ export default function App() {
     setLong(postcode_location[0]["longitude"]);
     let lat_post = postcode_location[0]["latitude"];
     let long_post = postcode_location[0]["longitude"];
+
     get_price_data(lat_post, long_post);
+    get_price_data_years(lat_post, long_post);
+  }
+
+  function slideMove(e) {
+    //console.log(e)
+    let new_e = (e) + 1995 
+    //console.log(new_e)
+    setYear(new_e)
+
   }
 
   function clickToMove(e) {
@@ -116,6 +210,7 @@ export default function App() {
   function MainApp() {
     return (
       <View style={styles.container}>
+        
         <MapView
           style={styles.map}
           region={{
@@ -146,15 +241,45 @@ export default function App() {
             //title={JSON.stringify(hm_points)}
           />
         </MapView>
+
+        {filterbyyear ?
+        
+        <Slider
+          style={{width: 200, height: 40}}
+          maximumValue={25}
+          minimumValue={0}
+          minimumTrackTintColor="#307ecc"
+          maximumTrackTintColor="#000000"
+          step={1}
+          value={isyear - 1995}
+          onSlidingComplete = {(e) => slideMove
+            (e)}
+        />
+
+        
+
+         : <Button
+
+        title = 'Filter By Year'
+        onPress = {() => setFilterByYear(true)}> 
+                      
+        </Button> }
+        <Text> Year </Text>
+        <Text> {isyear} </Text>
+        
+        
+        
         <Text style={styles.paragraph}>{errorMsg}</Text>
         <View flex={0} flexDirection="row" paddingBottom={15}></View>
         <BackButton />
+
+        
       </View>
     );
   }
 
   function enter() {
-    setAppTime(true), console.log("hello>?"), update_latlong_loc();
+    setAppTime(true), update_latlong_loc();
   }
   function EnterButton(props) {
     return <Button title="Use my location" onPress={() => enter()}></Button>;
@@ -164,11 +289,19 @@ export default function App() {
     return <Button title="Back Now" onPress={() => setAppTime(false)}></Button>;
   }
   function PostClickcheck(text) {
+
+    if (text == '') {setAddressFlag(true)}
+
+  else {  
+    setAddressFlag(false);
     setPostCodeInput(text);
     postCodeInput = text;
     Keyboard.dismiss();
     setAppTime(true);
     update_latlong_post();
+    
+  }
+
   }
 
   function PostCodeButton(props) {
@@ -188,19 +321,37 @@ export default function App() {
     return (
       <View style={[styles.text_stuff, styles.container]}>
         <Text style={[styles.text_stuff]}>
-          "Hey there, Would you like to use your phone's current location or
-          enter a postcode?"
+         Find the average house price for all the postcodes in a 2km radius around either your phone's current location or
+          any address in the UK.
+          </Text>
+          <Text>
+         
+
+          Click around the map to discover new locations.
+         
         </Text>
         <Text></Text>
         <EnterButton />
         <Text></Text>
         <PostCodeButton />
         <Text></Text>
-        <TextInput
+
+        
+        
+        {isaddressflag
+          ? <TextInput
+          style={styles.text_input}
+          onChangeText={(text) => setTempin(text)}
+          onSubmitEditing={() => PostClickcheck(tempInput)}
+          autoFocus
+        ></TextInput>
+          : <TextInput
           style={styles.text_input}
           onChangeText={(text) => setTempin(text)}
           onSubmitEditing={() => PostClickcheck(tempInput)}
         ></TextInput>
+        }  
+        
       </View>
     );
   }
