@@ -86,7 +86,7 @@ export default function App() {
         )
       );
       setfloodMsg(
-        `Flood potential: ${fdata["riverOrSea"]} \n${fdata["description"]}`
+        `⚠ Flood prone areas: ${fdata["riverOrSea"]} \n${fdata["description"]}`
       );
     } else {
       setfloodMsg("");
@@ -247,6 +247,7 @@ export default function App() {
     } else {
       get_price_data_years(lat_post, long_post);
     }
+    getFloodDataFromApi(postcode_location[0]["latitude"], postcode_location[0]["longitude"]);
   }
 
   function weight_average() {
@@ -320,6 +321,7 @@ export default function App() {
   function MainApp() {
     return (
       <View style={styles.container}>
+      <Text>ⓘ Tap on the marker to see the average property prices. You can tap anywhere on the map to move.</Text>
         <MapView
           style={styles.map}
           region={{
@@ -352,11 +354,9 @@ export default function App() {
             }
           />
         </MapView>
-        <Text style={styles.paragraph}>{errorMsg}</Text>
-        <Text>Tap on the map to see local property prices.</Text>
 
         <Text style={styles.text_flood}>{floodMsg}</Text>
-
+        <Text></Text>
         {filterbyyear ? Slide() : Not_Slide()}
 
         {filterbyyear ? (
