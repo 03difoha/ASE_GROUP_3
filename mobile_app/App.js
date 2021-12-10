@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import MapView from "react-native-maps";
 import * as Network from "expo-network";
 
+import Slider from "@react-native-community/slider";
+
 import {
   StyleSheet,
   Text,
@@ -24,8 +26,14 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState("");
   const [floodMsg, setfloodMsg] = useState("");
   const [isAppTime, setAppTime] = useState(false);
+  const [isaddressflag, setAddressFlag] = useState(false);
+  const [isyear, setYear] = useState(2000);
+  const [filterbyyear, setFilterByYear] = useState(false);
   var [postCodeInput, setPostCodeInput] = useState("");
   var tempInput = "";
+  var weights = 0;
+
+  var filter_update = false;
 
   useEffect(() => {
     (async () => {
@@ -73,16 +81,12 @@ export default function App() {
       var fdata = {};
       json.items.map(
         (item) => (
-          (fdata["riverOrSea"] = item.riverOrSea),
-          (fdata["description"] = item.description)
+          (fdata["riverOrSea"] = item.riverOrSea ? item.riverOrSea + ":" : ""),
+          (fdata["description"] = item.description ? item.description : "")
         )
       );
       setfloodMsg(
-        "Nearby flooding prone areas:\n" +
-          fdata["riverOrSea"] +
-          " : " +
-          fdata["description"] +
-          "\n"
+        `Flood potential: ${fdata["riverOrSea"]} \n${fdata["description"]}`
       );
     } else {
       setfloodMsg("");
@@ -96,6 +100,70 @@ export default function App() {
         longitude: Object.values(i)[1],
         weight: Object.values(i)[2],
       }));
+
+      setHM_Points(clean_hm_points);
+    }
+  }
+
+  async function get_price_data_years(lat, long) {
+    fetch(
+      "https://b274zqubga.execute-api.us-east-1.amazonaws.com/dev/pricesByYear",
+      {
+        method: "POST", // or 'PUT'
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ lat: lat, long: long }),
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        neaten_the_data_to_the_format_specified_years(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        return null;
+      });
+  }
+
+  function filter(e) {
+    console.log("year", e["years"][isyear]);
+
+    if (e["years"][isyear]) {
+      e["weight"] = e["years"][isyear];
+    } else {
+      e["weight"] = 0;
+    }
+
+    console.log("weight 1", e["weight"]);
+
+    if (e["years"][isyear]) {
+      e["weight"] =
+        e["weight"].reduce((total, next) => total + next, 0) /
+        e["weight"].length;
+    } else {
+      e["weight"] = 0;
+    }
+
+    console.log("weight 2", e["weight"]);
+
+    delete e["years"];
+
+    let new_e = {
+      latitude: Object.values(e)[0],
+      longitude: Object.values(e)[1],
+      weight: Object.values(e)[2],
+    };
+
+    return new_e;
+  }
+
+  function neaten_the_data_to_the_format_specified_years(dirty_hm_points) {
+    if (dirty_hm_points["message"] != "Internal Server Error") {
+      let clean_hm_points = Object.values(dirty_hm_points).map((i) =>
+        filter(i)
+      );
+
       setHM_Points(clean_hm_points);
     }
   }
@@ -125,6 +193,30 @@ export default function App() {
     let long_loc = location.coords.longitude;
     get_price_data(lat_loc, long_loc);
     getFloodDataFromApi(location.coords.latitude, location.coords.longitude);
+
+    //let filterbyyear = curr_hookcheck()
+
+    //console.log('filtertime', filterbyyear)
+
+    if (!filterbyyear) {
+      get_price_data(lat_loc, long_loc);
+    } else {
+      get_price_data_years(lat_loc, long_loc);
+    }
+  }
+
+  async function update_hm_points_filter(filterupdate) {
+    console.log("filtertime_Before", filterbyyear);
+
+    //let filterbyyear = setFilterByYear(current => current)
+
+    //console.log('filtertime_After', filterbyyear)
+
+    if (!filterupdate) {
+      get_price_data(lat, long);
+    } else {
+      get_price_data_years(lat, long);
+    }
   }
 
   async function update_hm_points_click(e) {
@@ -135,6 +227,12 @@ export default function App() {
       e.nativeEvent.coordinate["latitude"],
       e.nativeEvent.coordinate["longitude"]
     );
+
+    if (!filterbyyear) {
+      get_price_data(lat_click, long_click);
+    } else {
+      get_price_data_years(lat_click, long_click);
+    }
   }
 
   async function update_hm_points_post() {
@@ -143,11 +241,75 @@ export default function App() {
     setLong(postcode_location[0]["longitude"]);
     let lat_post = postcode_location[0]["latitude"];
     let long_post = postcode_location[0]["longitude"];
-    get_price_data(lat_post, long_post);
-    getFloodDataFromApi(
-      postcode_location[0]["latitude"],
-      postcode_location[0]["longitude"]
-    );
+
+    if (!filterbyyear) {
+      get_price_data(lat_post, long_post);
+    } else {
+      get_price_data_years(lat_post, long_post);
+    }
+  }
+
+  function weight_average() {
+    console.log("values", Object.values(hm_points)[0]["weight"]);
+    let weights = Object.values(hm_points).map((i) => i["weight"]);
+    console.log("weighty", weights);
+    weights = weights.filter((f) => f > 0);
+    console.log("filtered", weights);
+    weights = weights.reduce((total, next) => total + next, 0) / weights.length;
+    console.log("final", weights);
+
+    weights = Number(weights.toFixed(2));
+    return weights;
+  }
+
+  function slideMove(e) {
+    let new_e = e + 1995;
+
+    setYear(new_e);
+    update_hm_points_filter(true);
+  }
+
+  function neg_hookcheck() {
+    setFilterByYear(false);
+    return false;
+  }
+
+  function pos_hookcheck() {
+    setFilterByYear(true);
+    return true;
+  }
+
+  function neg_slide() {
+    filter_update = neg_hookcheck();
+    console.log("negslide", filterbyyear);
+    update_hm_points_filter(filter_update);
+  }
+
+  function pos_slide() {
+    filter_update = pos_hookcheck();
+    console.log("posslide", filterbyyear);
+    update_hm_points_filter(filter_update);
+  }
+
+  function Slide() {
+    return [
+      <Button title="Data over all time" onPress={() => neg_slide()}></Button>,
+
+      <Slider
+        style={{ width: 200, height: 40 }}
+        maximumValue={25}
+        minimumValue={0}
+        minimumTrackTintColor="#307ecc"
+        maximumTrackTintColor="#000000"
+        step={1}
+        value={isyear - 1995}
+        onSlidingComplete={(e) => slideMove(e)}
+      />,
+    ];
+  }
+
+  function Not_Slide() {
+    return <Button title="Filter By Year" onPress={() => pos_slide()}></Button>;
   }
 
   function clickToMove(e) {
@@ -184,21 +346,34 @@ export default function App() {
               latitude: lat,
               longitude: long,
             }}
-            title={"Average price in this area is Â£" + hm_points[0].weight}
-            //title={JSON.stringify(hm_points)}
+            title={
+              "Average price in this area is £" +
+              Math.round(hm_points[0].weight)
+            }
           />
         </MapView>
         <Text style={styles.paragraph}>{errorMsg}</Text>
-        <Text>Tap an area on the map to see the prices in that area.</Text>
-        <BackButton />
-        <Text></Text>
+        <Text>Tap on the map to see local property prices.</Text>
+
         <Text style={styles.text_flood}>{floodMsg}</Text>
+
+        {filterbyyear ? Slide() : Not_Slide()}
+
+        {filterbyyear ? (
+          <Text>Year: {isyear} </Text>
+        ) : (
+          <Text> 1995 - 2020 </Text>
+        )}
+
+        <BackButton />
       </View>
     );
   }
 
   function enter() {
-    setAppTime(true), console.log("hello>?"), update_latlong_loc();
+    setAppTime(true);
+    update_latlong_loc();
+    update_hm_points_filter();
   }
   function EnterButton(props) {
     return <Button title="Use my location" onPress={() => enter()}></Button>;
@@ -208,11 +383,16 @@ export default function App() {
     return <Button title="Back Now" onPress={() => setAppTime(false)}></Button>;
   }
   function PostClickcheck(text) {
-    setPostCodeInput(text);
-    postCodeInput = text;
-    Keyboard.dismiss();
-    setAppTime(true);
-    update_latlong_post();
+    if (text == "") {
+      setAddressFlag(true);
+    } else {
+      setAddressFlag(false);
+      setPostCodeInput(text);
+      postCodeInput = text;
+      Keyboard.dismiss();
+      setAppTime(true);
+      update_latlong_post();
+    }
   }
 
   function PostCodeButton(props) {
@@ -232,19 +412,30 @@ export default function App() {
     return (
       <View style={[styles.text_stuff, styles.container]}>
         <Text style={[styles.text_stuff]}>
-          "Hey there, Would you like to use your phone's current location or
-          enter a postcode?"
+          Find the average house price for all the postcodes in a 2km radius
+          around either your phone's current location or any address in the UK.
         </Text>
+        <Text>Click around the map to discover new locations.</Text>
         <Text></Text>
         <EnterButton />
         <Text></Text>
         <PostCodeButton />
         <Text></Text>
-        <TextInput
-          style={styles.text_input}
-          onChangeText={(text) => setTempin(text)}
-          onSubmitEditing={() => PostClickcheck(tempInput)}
-        ></TextInput>
+
+        {isaddressflag ? (
+          <TextInput
+            style={styles.text_input}
+            onChangeText={(text) => setTempin(text)}
+            onSubmitEditing={() => PostClickcheck(tempInput)}
+            autoFocus
+          ></TextInput>
+        ) : (
+          <TextInput
+            style={styles.text_input}
+            onChangeText={(text) => setTempin(text)}
+            onSubmitEditing={() => PostClickcheck(tempInput)}
+          ></TextInput>
+        )}
       </View>
     );
   }
@@ -268,7 +459,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: 600,
-    height: 500,
+    height: 400,
   },
   left: {
     alignSelf: "flex-start",
