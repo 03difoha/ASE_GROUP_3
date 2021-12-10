@@ -22,6 +22,7 @@ export default function App() {
   ]);
 
   const [errorMsg, setErrorMsg] = useState("");
+  const [floodMsg, setfloodMsg] = useState("");
   const [isAppTime, setAppTime] = useState(false);
   var [postCodeInput, setPostCodeInput] = useState("");
   var tempInput = "";
@@ -59,6 +60,35 @@ export default function App() {
       });
   }
 
+  async function getFloodDataFromApi(lati, longi) {
+    let flooData = await fetch(
+      "https://environment.data.gov.uk/flood-monitoring/id/floodAreas/?lat=" +
+        String(lati) +
+        "&long=" +
+        String(longi) +
+        "&dist=1"
+    );
+    let json = await flooData.json();
+    if (Object.keys(json.items).length != 0) {
+      var fdata = {};
+      json.items.map(
+        (item) => (
+          (fdata["riverOrSea"] = item.riverOrSea),
+          (fdata["description"] = item.description)
+        )
+      );
+      setfloodMsg(
+        "Nearby flooding prone areas:\n" +
+          fdata["riverOrSea"] +
+          " : " +
+          fdata["description"] +
+          "\n"
+      );
+    } else {
+      setfloodMsg("");
+    }
+  }
+
   function neaten_the_data_to_the_format_specified(dirty_hm_points) {
     if (dirty_hm_points["message"] != "Internal Server Error") {
       let clean_hm_points = Object.values(dirty_hm_points).map((i) => ({
@@ -81,6 +111,10 @@ export default function App() {
   async function update_latlong_click(e) {
     setLat(e.nativeEvent.coordinate["latitude"]);
     setLong(e.nativeEvent.coordinate["longitude"]);
+    getFloodDataFromApi(
+      e.nativeEvent.coordinate["latitude"],
+      e.nativeEvent.coordinate["longitude"]
+    );
   }
 
   async function update_hm_points() {
@@ -90,13 +124,17 @@ export default function App() {
     let lat_loc = location.coords.latitude;
     let long_loc = location.coords.longitude;
     get_price_data(lat_loc, long_loc);
+    getFloodDataFromApi(location.coords.latitude, location.coords.longitude);
   }
 
   async function update_hm_points_click(e) {
     let lat_click = e.nativeEvent.coordinate["latitude"];
     let long_click = e.nativeEvent.coordinate["longitude"];
-
     get_price_data(lat_click, long_click);
+    getFloodDataFromApi(
+      e.nativeEvent.coordinate["latitude"],
+      e.nativeEvent.coordinate["longitude"]
+    );
   }
 
   async function update_hm_points_post() {
@@ -106,6 +144,10 @@ export default function App() {
     let lat_post = postcode_location[0]["latitude"];
     let long_post = postcode_location[0]["longitude"];
     get_price_data(lat_post, long_post);
+    getFloodDataFromApi(
+      postcode_location[0]["latitude"],
+      postcode_location[0]["longitude"]
+    );
   }
 
   function clickToMove(e) {
@@ -142,13 +184,15 @@ export default function App() {
               latitude: lat,
               longitude: long,
             }}
-            title={"Average price in this area is £" + hm_points[0].weight}
+            title={"Average price in this area is Â£" + hm_points[0].weight}
             //title={JSON.stringify(hm_points)}
           />
         </MapView>
         <Text style={styles.paragraph}>{errorMsg}</Text>
-        <View flex={0} flexDirection="row" paddingBottom={15}></View>
+        <Text>Tap an area on the map to see the prices in that area.</Text>
         <BackButton />
+        <Text></Text>
+        <Text style={styles.text_flood}>{floodMsg}</Text>
       </View>
     );
   }
@@ -255,6 +299,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     backgroundColor: "orange",
     padding: 5,
+  },
+
+  text_flood: {
+    color: "red",
   },
 
   text_input: {
