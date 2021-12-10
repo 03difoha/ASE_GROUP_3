@@ -33,6 +33,9 @@ export default function App() {
   const [filterbyyear, setFilterByYear] = useState(false)
   var [postCodeInput, setPostCodeInput] = useState("");
   var tempInput = "";
+  var weights = 0;
+
+  var filter_update = false;
 
   useEffect(() => {
     (async () => {
@@ -110,16 +113,30 @@ export default function App() {
   function filter(e) {
 
 
-    if (e['years'][isyear]) {e['weight'] = e['years'][isyear]['avg']}
+    console.log('year', e['years'][isyear])
+
+    if (e['years'][isyear]) {e['weight'] = e['years'][isyear]}
      else {e['weight'] = 0}
 
+     console.log('weight 1', e['weight'])
+
+     if (e['years'][isyear]) {e['weight'] =  e['weight'].reduce((total, next) => total + next, 0) / e['weight'].length}
+     else {e['weight'] = 0}
+     
+
+     console.log('weight 2', e['weight'])
+
     delete e['years'];
+
+    
 
 
     let new_e = {latitude : Object.values(e)[0],
                  longitude : Object.values(e)[1],
                  weight : Object.values(e)[2]}
 
+
+    
 
     return new_e
 
@@ -154,7 +171,9 @@ export default function App() {
     let lat_loc = location.coords.latitude;
     let long_loc = location.coords.longitude;
 
-    console.log('filtertime', filterbyyear)
+    //let filterbyyear = curr_hookcheck()
+
+    //console.log('filtertime', filterbyyear)
     
 
     if (!filterbyyear) {
@@ -163,11 +182,16 @@ export default function App() {
     get_price_data_years(lat_loc, long_loc); }
   }
 
-  async function update_hm_points_filter() {
+  async function update_hm_points_filter(filterupdate) {
 
-    console.log('filtertime', filterbyyear)
 
-    if (filterbyyear) {
+    console.log('filtertime_Before', filterbyyear)
+
+    //let filterbyyear = setFilterByYear(current => current)
+
+    //console.log('filtertime_After', filterbyyear)
+
+    if (!filterupdate) {
 
     get_price_data(lat, long); } else {
     get_price_data_years(lat, long); }
@@ -177,7 +201,7 @@ export default function App() {
     let lat_click = e.nativeEvent.coordinate["latitude"];
     let long_click = e.nativeEvent.coordinate["longitude"];
 
-    if (filterbyyear) {
+    if (!filterbyyear) {
 
       get_price_data(lat_click, long_click); } else {
       get_price_data_years(lat_click, long_click); }
@@ -197,24 +221,47 @@ export default function App() {
 
   }
 
+  function weight_average() {
+
+    console.log('values', Object.values(hm_points)[0]['weight'])
+    let weights = Object.values(hm_points).map((i) => i['weight'])
+    console.log('weighty', weights)
+    weights = weights.filter( f  => f  > 0)
+    console.log('filtered', weights)
+    weights = weights.reduce((total, next) => total + next, 0) / weights.length
+    console.log('final', weights)
+
+    weights = Number((weights).toFixed(2))
+    return weights
+  }
+
   function slideMove(e) {
    
     let new_e = e + 1995; 
    
     setYear(new_e);
-    update_hm_points_filter();
+    update_hm_points_filter(true);
 
   }
 
-  async function hookcheck() {
 
-    let filterbyyear = setFilterByYear(prevCheck => !prevCheck); 
-    return filterbyyear}
+  function neg_hookcheck() {
+    setFilterByYear(false)
+    return false }
 
+     function pos_hookcheck() {
+    setFilterByYear(true)
+    return true}
 
-  function slideaway() {let filterbyyear = hookcheck();  
-                        update_hm_points_filter(filterbyyear);}
+  
+  function neg_slide() {filter_update = neg_hookcheck();
+                        console.log('negslide', filterbyyear);  
+                        update_hm_points_filter(filter_update);}
 
+   function pos_slide() {filter_update = pos_hookcheck();  
+                         console.log('posslide', filterbyyear);
+                         update_hm_points_filter(filter_update);}
+   
   function Slide() {
   
   return (
@@ -223,7 +270,7 @@ export default function App() {
     [<Button
 
     title = 'Data over all time'
-    onPress = {() => slideaway(0)} 
+    onPress = {() => neg_slide()} 
     >
                 
     </Button>,
@@ -236,27 +283,40 @@ export default function App() {
         maximumTrackTintColor="#000000"
         step={1}
         value={isyear - 1995}
-        onSlidingComplete = {(e) => slideMove
-          (e)}
-        on
-      /> ] 
+        onSlidingComplete = {(e) => slideMove(e)}
+        
+      />] 
       
   )
 
 }
 
+
+function Not_Slide() {
+
+   return (
+
+<Button
+
+        title = 'Filter By Year'
+        onPress = {() => pos_slide()}> 
+                      
+        </Button>)}
+
+
+
+
+
+
   function clickToMove(e) {
     update_latlong_click(e);
     update_hm_points_click(e);
-  }
+    }
 
   function MainApp() {
     return (
       <View style={styles.container}>
         
-        
-
-        {filterbyyear?
 
         <MapView
           style={styles.map}
@@ -282,74 +342,32 @@ export default function App() {
             heatmapMode={"POINTS_DENSITY"}
           />
 
+
+          {console.log(hm_points)}
           
-
           <MapView.Marker
             coordinate={{
               latitude: lat,
               longitude: long,
             }}
-            title={"Average price in this area is £" + hm_points[0].weight}
+            title={"Average price in this area is £" + weight_average()}
             //title={JSON.stringify(hm_points)}
           />
 
           </MapView>
         
-        : 
-
-        <MapView
-          style={styles.map}
-          region={{
-            latitude: lat,
-            longitude: long,
-            latitudeDelta: 0.04,
-            longitudeDelta: 0.05,
-          }}
-          onPress={(e) => {
-            clickToMove(e);
-          }}
-        >
-        
-        <MapView.Heatmap
-            points={hm_points}
-            opacity={0.6}
-            radius={50}
-            maxIntensity={100}
-            gradientSmoothing={10}
-            heatmapMode={"POINTS_DENSITY"}
-          />
-
-
-          <MapView.Marker
-            coordinate={{
-              latitude: lat,
-              longitude: long,
-            }}
-            title={"Average price in this area is £" + hm_points[0].weight}
-            //title={JSON.stringify(hm_points)}
-          />
-
-          </MapView>
-         }
          
 
         {filterbyyear ?      
 
-        Slide() 
-
-         : <Button
-
-        title = 'Filter By Year'
-        onPress = {() => slideaway(1)}> 
-                      
-        </Button> }
+        Slide() : Not_Slide()}
 
 
         <Text> Year </Text>
 
         
 
-        {filterbyyear? <Text> {isyear} </Text> :   <Text> 1996 - 2020 </Text>}
+        {filterbyyear? <Text> {isyear} </Text> :   <Text> 1995 - 2020 </Text>}
        
         
         
@@ -364,14 +382,14 @@ export default function App() {
   }
 
   function enter() {
-    setAppTime(true), update_latlong_loc();
+    setAppTime(true); update_latlong_loc(); update_hm_points_filter();
   }
   function EnterButton(props) {
     return <Button title="Use my location" onPress={() => enter()}></Button>;
   }
 
   function BackButton(props) {
-    return <Button title="Back Now" onPress={() => [setAppTime(false), setFilterByYear(false)]}></Button>;
+    return <Button title="Back Now" onPress={() => setAppTime(false)}></Button>;
   }
   function PostClickcheck(text) {
 
